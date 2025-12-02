@@ -1,71 +1,48 @@
-#![allow(unused_imports)]
-#![warn(missing_docs)]
-//! Parses a `Vec<u8>` as an byte sequence with ansi colors to
-//! [`tui::text::Text`][Text].  
-//!
-//! Invalid ansi colors / sequences will be ignored.  
-//!
-//!
-//! Supported features
-//! - UTF-8 using `String::from_utf8` or [`simdutf8`][simdutf8].
-//! - Most stuff like **Bold** / *Italic* / <u>Underline</u> / ~~Strikethrough~~.
-//! - Supports 4-bit color palletes.
-//! - Supports 8-bit color.
-//! - Supports True color ( RGB / 24-bit color ).
-//!
-//!
-//! ## Example
-//! The argument to the function `ansi_to_text` implements `IntoIterator` so it will be consumed on
-//! use.
-//! ```rust
-//! # fn doctest() -> eyre::Result<()> {
-//! use ansi_to_tui::IntoText as _;
-//! let bytes = b"\x1b[38;2;225;192;203mAAAAA\x1b[0m".to_owned().to_vec();
-//! let text = bytes.into_text()?;
-//! # Ok(()) }
-//! ```
-//! Example parsing from a file.
-//! ```rust
-//! # fn doctest() -> eyre::Result<()> {
-//! use ansi_to_tui::IntoText as _;
-//! let buffer = std::fs::read("ascii/text.ascii")?;
-//! let text = buffer.into_text()?;
-//! # Ok(()) }
-//! ```
-//!
-//! If you want to use [`simdutf8`][simdutf8] instead of `String::from_utf8()`  
-//! for parsing UTF-8 then enable optional feature `simd`  
-//!  
-//! [Text]: https://docs.rs/tui/0.15.0/tui/text/struct.Text.html
-//! [ansi-to-tui]: https://github.com/uttarayan21/ansi-to-tui
-//! [simdutf8]: https://github.com/rusticstuff/simdutf8
+/**
+ * Parses a [ByteArray] as a byte sequence with ANSI colors to [ratatui.text.Text].
+ *
+ * Invalid ANSI colors / sequences will be ignored.
+ *
+ * ## Supported features
+ * - UTF-8 parsing
+ * - Most stuff like **Bold** / *Italic* / Underline / ~~Strikethrough~~
+ * - Supports 4-bit color palettes
+ * - Supports 8-bit color
+ * - Supports True color (RGB / 24-bit color)
+ *
+ * ## Example
+ *
+ * ```kotlin
+ * val bytes = "\u001b[38;2;225;192;203mAAAAA\u001b[0m".encodeToByteArray()
+ * val text = bytes.intoText()
+ * ```
+ *
+ * Example parsing from a string:
+ *
+ * ```kotlin
+ * val content = "Hello \u001b[31mRed\u001b[0m World"
+ * val text = content.intoText()
+ * ```
+ */
+package ansi_to_tui
 
-// mod ansi;
-mod code;
-mod error;
-mod parser;
-pub use error::Error;
-use ratatui_core::text::Text;
+import ratatui.text.Text
 
-/// IntoText will convert any type that has a AsRef<[u8]> to a Text.
-pub trait IntoText {
-    /// Convert the type to a Text.
-    #[allow(clippy::wrong_self_convention)]
-    fn into_text(&self) -> Result<Text<'static>, Error>;
-    /// Convert the type to a Text while trying to copy as less as possible
-    #[cfg(feature = "zero-copy")]
-    fn to_text(&self) -> Result<Text<'_>, Error>;
-}
-impl<T> IntoText for T
-where
-    T: AsRef<[u8]>,
-{
-    fn into_text(&self) -> Result<Text<'static>, Error> {
-        Ok(crate::parser::text(self.as_ref())?.1)
-    }
+/**
+ * Convert a [ByteArray] containing ANSI escape sequences to a [Text].
+ *
+ * Invalid ANSI sequences are ignored.
+ *
+ * @return The parsed [Text] with styles applied.
+ * @throws AnsiError.Utf8Error if the input contains invalid UTF-8 sequences.
+ */
+fun ByteArray.intoText(): Text = parseText(this)
 
-    #[cfg(feature = "zero-copy")]
-    fn to_text(&self) -> Result<Text<'_>, Error> {
-        Ok(crate::parser::text_fast(self.as_ref())?.1)
-    }
-}
+/**
+ * Convert a [String] containing ANSI escape sequences to a [Text].
+ *
+ * Invalid ANSI sequences are ignored.
+ *
+ * @return The parsed [Text] with styles applied.
+ */
+fun String.intoText(): Text = this.encodeToByteArray().intoText()
