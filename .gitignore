@@ -1,2 +1,3 @@
 /target
 .direnv
+/build/kotlin/commonizedNativeDistributionLocation.txt
