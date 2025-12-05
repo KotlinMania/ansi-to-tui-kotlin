@@ -1,8 +1,16 @@
-package ansi_to_tui
+/**
+ * ANSI SGR (Select Graphic Rendition) code definitions.
+ *
+ * This module defines the [AnsiCode] sealed class hierarchy representing
+ * the various ANSI escape codes for text styling.
+ */
+package ansitotui
 
 import ratatui.style.Color
 
 /**
+ * ANSI SGR (Select Graphic Rendition) codes.
+ *
  * This sealed class stores most types of ANSI escape sequences.
  *
  * You can convert an escape sequence code to an [AnsiCode] using [AnsiCode.from].

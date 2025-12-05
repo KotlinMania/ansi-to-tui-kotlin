@@ -1,7 +1,16 @@
-package ansi_to_tui
+/**
+ * Error types for ANSI parsing.
+ *
+ * This module defines the [AnsiError] sealed class hierarchy for errors
+ * that can occur during ANSI parsing.
+ */
+package ansitotui
 
 /**
  * Error types for ANSI parsing.
+ *
+ * All parsing errors extend this sealed class to allow exhaustive
+ * when-expression matching.
  */
 sealed class AnsiError : Exception() {
     /**

@@ -24,7 +24,7 @@
  * val text = content.intoText()
  * ```
  */
-package ansi_to_tui
+package ansitotui
 
 import ratatui.text.Text
 

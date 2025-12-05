@@ -17,7 +17,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             // Custom source directory to match current layout
-            kotlin.srcDir("commonMain/ansi_to_tui/src")
+            kotlin.srcDir("commonMain/ansitotui/src")
 
             dependencies {
                 // Depends on ratatui-kotlin for Text, Span, Style types
@@ -26,6 +26,7 @@ kotlin {
         }
 
         val commonTest by getting {
+            kotlin.srcDir("commonTest/kotlin")
             dependencies {
                 implementation(kotlin("test"))
             }

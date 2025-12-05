@@ -1,4 +1,19 @@
-package ansi_to_tui
+/**
+ * ANSI escape sequence parser.
+ *
+ * This module provides the core parsing logic for converting byte sequences containing
+ * ANSI escape codes into ratatui [Text] objects with appropriate styling.
+ *
+ * The parser supports:
+ * - SGR (Select Graphic Rendition) codes for text styling
+ * - 4-bit colors (standard and bright)
+ * - 8-bit indexed colors (256 color palette)
+ * - 24-bit true colors (RGB)
+ * - Style modifiers (bold, italic, underline, blink, etc.)
+ *
+ * Invalid or unrecognized escape sequences are silently ignored.
+ */
+package ansitotui
 
 import ratatui.style.Color
 import ratatui.style.Modifier
@@ -8,7 +23,7 @@ import ratatui.text.Span
 import ratatui.text.Text
 
 /**
- * Color type for extended colors.
+ * Color type indicator for extended colors (8-bit and 24-bit).
  */
 private enum class ColorType {
     /** Eight bit color (256 color palette) */
@@ -78,6 +93,11 @@ private data class AnsiStates(
 
 /**
  * Parser state for tracking position in byte array.
+ *
+ * This class provides low-level parsing utilities for navigating through
+ * byte sequences, similar to parser combinator libraries.
+ *
+ * @property data The byte array being parsed.
  */
 private class Parser(private val data: ByteArray) {
     var pos: Int = 0
@@ -131,7 +151,7 @@ private class Parser(private val data: ByteArray) {
         return true
     }
 
-    fun parseU8(): UByte? {
+    fun parseUByte(): UByte? {
         val start = pos
         while (pos < data.size && data[pos] in '0'.code.toByte()..'9'.code.toByte()) {
             pos++
@@ -159,6 +179,12 @@ private class Parser(private val data: ByteArray) {
 
 /**
  * Parse a byte array containing ANSI escape sequences into a [Text].
+ *
+ * This is the main entry point for ANSI parsing. It processes the entire
+ * byte array line by line, accumulating styled spans into a [Text] object.
+ *
+ * @param data The byte array to parse.
+ * @return A [Text] object with styled lines and spans.
  */
 internal fun parseText(data: ByteArray): Text {
     val lines = mutableListOf<Line>()
@@ -176,10 +202,12 @@ internal fun parseText(data: ByteArray): Text {
 
 /**
  * Parse a single line from the parser.
+ *
+ * @param parser The parser state.
+ * @param style The current style to apply to spans.
+ * @return A pair of the parsed [Line] and the style at end of line.
  */
 private fun parseLine(parser: Parser, style: Style): Pair<Line, Style> {
-    val lineStart = parser.pos
-
     // Take until newline
     val lineData = parser.takeUntil { it == '\n'.code.toByte() }
 
@@ -205,6 +233,12 @@ private fun parseLine(parser: Parser, style: Style): Pair<Line, Style> {
 
 /**
  * Parse a single span from the parser.
+ *
+ * A span consists of an optional style escape sequence followed by text content.
+ *
+ * @param parser The parser state.
+ * @param lastStyle The style from the previous span.
+ * @return The parsed [Span] with content and style.
  */
 private fun parseSpan(parser: Parser, lastStyle: Style): Span {
     var currentStyle = lastStyle
@@ -230,7 +264,14 @@ private fun parseSpan(parser: Parser, lastStyle: Style): Span {
 private const val ESC: Byte = 0x1B
 
 /**
- * Parse a style escape sequence.
+ * Parse a style escape sequence (SGR - Select Graphic Rendition).
+ *
+ * SGR sequences have the format: ESC [ <params> m
+ * where params are semicolon-separated numeric codes.
+ *
+ * @param parser The parser state.
+ * @param style The current style to modify.
+ * @return The new style if a valid SGR sequence was parsed, null otherwise.
  */
 private fun parseStyle(parser: Parser, style: Style): Style? {
     if (parser.peek() != ESC) return null
@@ -268,7 +309,13 @@ private fun parseStyle(parser: Parser, style: Style): Style? {
 }
 
 /**
- * Consume any escape sequence (for sequences we don't understand).
+ * Consume any escape sequence we don't understand.
+ *
+ * This handles CSI sequences (ESC [) and OSC sequences (ESC ])
+ * that we don't specifically parse, preventing them from appearing
+ * as garbage in the output text.
+ *
+ * @param parser The parser state.
  */
 private fun consumeAnyEscapeSequence(parser: Parser) {
     val nextChar = parser.peek() ?: return
@@ -293,10 +340,13 @@ private fun consumeAnyEscapeSequence(parser: Parser) {
 }
 
 /**
- * Parse a single SGR item.
+ * Parse a single SGR item (one numeric code in the sequence).
+ *
+ * @param parser The parser state.
+ * @return The parsed [AnsiItem] or null if parsing failed.
  */
 private fun parseSgrItem(parser: Parser): AnsiItem? {
-    val code = parser.parseU8() ?: return null
+    val code = parser.parseUByte() ?: return null
     val ansiCode = AnsiCode.from(code)
 
     val color = when (ansiCode) {
@@ -311,7 +361,14 @@ private fun parseSgrItem(parser: Parser): AnsiItem? {
 }
 
 /**
- * Parse an extended color (8-bit or 24-bit).
+ * Parse an extended color (8-bit indexed or 24-bit RGB).
+ *
+ * Extended colors follow code 38 (foreground) or 48 (background) and have the format:
+ * - 8-bit: `38;5;N` where N is 0-255
+ * - 24-bit: `38;2;R;G;B` where R, G, B are 0-255
+ *
+ * @param parser The parser state.
+ * @return The parsed [Color] or null if parsing failed.
  */
 private fun parseColor(parser: Parser): Color? {
     val colorType = parseColorType(parser) ?: return null
@@ -319,22 +376,25 @@ private fun parseColor(parser: Parser): Color? {
 
     return when (colorType) {
         ColorType.TrueColor -> {
-            val r = parser.parseU8() ?: return null
+            val r = parser.parseUByte() ?: return null
             if (!parser.expectChar(';')) return null
-            val g = parser.parseU8() ?: return null
+            val g = parser.parseUByte() ?: return null
             if (!parser.expectChar(';')) return null
-            val b = parser.parseU8() ?: return null
+            val b = parser.parseUByte() ?: return null
             Color.Rgb(r, g, b)
         }
         ColorType.EightBit -> {
-            val index = parser.parseU8() ?: return null
+            val index = parser.parseUByte() ?: return null
             Color.Indexed(index)
         }
     }
 }
 
 /**
- * Parse the color type indicator.
+ * Parse the color type indicator (2 for RGB, 5 for indexed).
+ *
+ * @param parser The parser state.
+ * @return The [ColorType] or null if parsing failed.
  */
 private fun parseColorType(parser: Parser): ColorType? {
     val t = parser.parseInt() ?: return null
