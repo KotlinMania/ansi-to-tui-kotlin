@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.kotlinmania"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 kotlin {
     applyDefaultHierarchyTemplate()
@@ -22,7 +22,7 @@ kotlin {
 
             dependencies {
                 // Depends on ratatui-kotlin for Text, Span, Style types
-                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.0")
+                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.1")
             }
         }
 
@@ -50,7 +50,7 @@ kotlin {
 mavenPublishing {
     // Use Sonatype S01 for both SNAPSHOT and Release publications via OSSRH staging
     // This works well with a multi-OS matrix in CI (build native artifacts per OS)
-    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.S01)
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
     coordinates(group.toString(), "ansi-to-tui-kotlin", version.toString())
