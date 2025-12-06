@@ -68,8 +68,6 @@ dependencies {
 ## Quick Start
 
 ```kotlin
-import ansitotui.intoText
-
 // Parse ANSI-colored text from a string
 val text = "\u001b[38;2;225;192;203mPink Text\u001b[0m".intoText()
 
@@ -77,6 +75,11 @@ val text = "\u001b[38;2;225;192;203mPink Text\u001b[0m".intoText()
 val bytes = someFile.readBytes()
 val styledText = bytes.intoText()
 ```
+
+
+Notes:
+- The build uses the Vanniktech Maven Publish plugin and publishes to Sonatype S01. CI passes these secrets to Gradle via environment variables (`ORG_GRADLE_PROJECT_*`).
+- For releases, tag the repo (e.g., `v0.1.0`) or run the workflow with `release=true`. For snapshots, keep the project version ending with `-SNAPSHOT` and push to `main`.
 
 ## Supported Escape Sequences
 
