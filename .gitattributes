@@ -1,0 +1,7 @@
+# Ensure wrapper scripts have correct line endings across platforms
+gradlew text eol=lf
+*.sh text eol=lf
+
+# On Windows, keep batch files with CRLF
+gradlew.bat text eol=crlf
+*.bat text eol=crlf
