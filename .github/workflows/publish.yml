@@ -38,6 +38,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
+          chmod +x gradlew
           REPO_ID=$(./gradlew -q createStagingRepository)
           echo "repository_id=${REPO_ID}" >> $GITHUB_OUTPUT
 
@@ -64,6 +65,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
           ORG_GRADLE_PROJECT_mavenCentralRepositoryId: ${{ needs.create-staging-repository.outputs.repository_id }}
         run: |
+          chmod +x gradlew
           ./gradlew --stacktrace publishToMavenCentral
 
   close-and-release:
@@ -85,6 +87,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
           ORG_GRADLE_PROJECT_mavenCentralRepositoryId: ${{ needs.create-staging-repository.outputs.repository_id }}
         run: |
+          chmod +x gradlew
           ./gradlew --stacktrace closeAndReleaseSonatypeStagingRepository
 
   # Snapshot publishing from Linux only (S01 snapshots). Triggered on push to main with -SNAPSHOT version.
@@ -105,4 +108,5 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
+          chmod +x gradlew
           ./gradlew --stacktrace publishAllPublicationsToMavenCentral

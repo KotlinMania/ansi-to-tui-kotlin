@@ -1,0 +1,40 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'ascii/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'ascii/**'
+
+jobs:
+  build:
+    name: Build and Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and test (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x gradlew
+          ./gradlew build allTests --no-configuration-cache
+
+      - name: Build and test (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          gradlew.bat build allTests --no-configuration-cache
