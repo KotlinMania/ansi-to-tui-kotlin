@@ -13,8 +13,8 @@ on:
     paths-ignore:
       - '**.md'
       - 'ascii/**'
-  tags:
-    - 'v*'
+    tags:
+      - 'v*'
 
 jobs:
   # Create a shared staging repository on Sonatype S01 for releases
