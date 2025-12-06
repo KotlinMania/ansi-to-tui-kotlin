@@ -6,10 +6,6 @@ plugins {
 group = "io.github.kotlinmania"
 version = "0.1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
 kotlin {
     applyDefaultHierarchyTemplate()
 
