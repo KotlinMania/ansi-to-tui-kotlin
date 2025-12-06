@@ -25,6 +25,9 @@ jobs:
       repository_id: ${{ steps.staging.outputs.repository_id }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -37,6 +40,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        working-directory: ${{ github.workspace }}
         run: |
           chmod +x gradlew
           REPO_ID=$(./gradlew -q createStagingRepository)
@@ -52,6 +56,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -64,6 +71,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
           ORG_GRADLE_PROJECT_mavenCentralRepositoryId: ${{ needs.create-staging-repository.outputs.repository_id }}
+        working-directory: ${{ github.workspace }}
         run: |
           chmod +x gradlew
           ./gradlew --stacktrace publishToMavenCentral
@@ -74,6 +82,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -86,6 +97,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
           ORG_GRADLE_PROJECT_mavenCentralRepositoryId: ${{ needs.create-staging-repository.outputs.repository_id }}
+        working-directory: ${{ github.workspace }}
         run: |
           chmod +x gradlew
           ./gradlew --stacktrace closeAndReleaseSonatypeStagingRepository
@@ -96,6 +108,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -107,6 +122,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        working-directory: ${{ github.workspace }}
         run: |
           chmod +x gradlew
           ./gradlew --stacktrace publishAllPublicationsToMavenCentral
