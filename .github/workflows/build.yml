@@ -20,6 +20,9 @@ jobs:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
 
       - uses: actions/setup-java@v4
         with:
@@ -28,13 +31,27 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Verify Gradle wrapper (Unix)
+        if: runner.os != 'Windows'
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          pwd
+          ls -la
+          ls -la gradle/wrapper || true
+          test -f gradle/wrapper/gradle-wrapper.jar || { echo "ERROR: gradle/wrapper/gradle-wrapper.jar is missing. Ensure it is committed to VCS."; exit 1; }
+
       - name: Build and test (Unix)
         if: runner.os != 'Windows'
+        working-directory: ${{ github.workspace }}
         run: |
           chmod +x gradlew
           ./gradlew build allTests --no-configuration-cache
 
       - name: Build and test (Windows)
         if: runner.os == 'Windows'
+        working-directory: ${{ github.workspace }}
         run: |
+          dir gradle\wrapper
+          if not exist gradle\wrapper\gradle-wrapper.jar ( echo ERROR: gradle\\wrapper\\gradle-wrapper.jar is missing. Ensure it is committed to VCS. & exit /b 1 )
           gradlew.bat build allTests --no-configuration-cache
