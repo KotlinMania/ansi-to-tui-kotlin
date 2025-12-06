@@ -52,7 +52,9 @@ kotlin {
 }
 
 mavenPublishing {
-    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    // Use Sonatype S01 for both SNAPSHOT and Release publications via OSSRH staging
+    // This works well with a multi-OS matrix in CI (build native artifacts per OS)
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.S01)
     signAllPublications()
 
     coordinates(group.toString(), "ansi-to-tui-kotlin", version.toString())
@@ -75,7 +77,7 @@ mavenPublishing {
             developer {
                 id.set("sydneyrenee")
                 name.set("Sydney Renee")
-                email.set("sydney@thesolace.ai")
+                email.set("sydney@solace.ofharmony.ai")
                 url.set("https://github.com/sydneyrenee")
             }
         }

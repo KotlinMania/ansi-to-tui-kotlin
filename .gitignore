@@ -13,3 +13,4 @@
 # Kotlin/Native
 *.kexe
 *.klib
+/gradle/wrapper/
