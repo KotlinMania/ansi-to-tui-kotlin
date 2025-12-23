@@ -82,7 +82,7 @@ kotlin {
             kotlin.srcDir("commonMain/ansitotui/src")
 
             dependencies {
-                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.1")
+                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.2")
             }
         }
 
