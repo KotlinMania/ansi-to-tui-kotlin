@@ -14,3 +14,6 @@
 *.kexe
 *.klib
 
+# Android SDK
+/.android-sdk/
+local.properties
