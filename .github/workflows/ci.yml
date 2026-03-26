@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-macos:
-    name: Build and Test (macOS / iOS)
+    name: Build and Test (macOS)
     runs-on: macos-latest
 
     steps:
@@ -28,7 +28,7 @@ jobs:
         run: ./gradlew allTests assembleAnsiToTuiXCFramework --no-configuration-cache
 
   build-linux:
-    name: Build and Test (Linux / Android / JS / WASM)
+    name: Build and Test (Linux)
     runs-on: ubuntu-latest
 
     steps:
