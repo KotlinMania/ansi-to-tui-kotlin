@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.kotlinmania"
-version = "0.1.1"
+version = "0.1.3"
 
 kotlin {
     applyDefaultHierarchyTemplate()
@@ -34,7 +34,7 @@ kotlin {
             kotlin.srcDir("commonMain/ansitotui/src")
 
             dependencies {
-                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.1")
+                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.7")
             }
         }
 
