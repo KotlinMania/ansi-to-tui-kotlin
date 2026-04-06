@@ -2,7 +2,7 @@ import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
-    kotlin("multiplatform") version "2.3.0"
+    kotlin("multiplatform") version "2.3.20"
     id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
