@@ -17,3 +17,6 @@
 # Android SDK
 /.android-sdk/
 local.properties
+
+# macOS Finder metadata
+.DS_Store
