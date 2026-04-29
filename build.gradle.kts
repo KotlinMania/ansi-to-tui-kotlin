@@ -1,4 +1,8 @@
+@file:OptIn(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi::class)
+
 import com.vanniktech.maven.publish.SonatypeHost
+import org.jetbrains.kotlin.gradle.plugin.mpp.DisableCacheInKotlinVersion
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
@@ -29,12 +33,23 @@ kotlin {
     linuxX64()
     mingwX64()
 
+    targets.withType<KotlinNativeTarget>().configureEach {
+        binaries.all {
+            disableNativeCache(
+                version = DisableCacheInKotlinVersion.`2_3_20`,
+                reason = "Fleeksoft charset/io klib cache crashes Kotlin/Native 2.3.20 during test linking."
+            )
+        }
+    }
+
     sourceSets {
         val commonMain by getting {
             kotlin.srcDir("commonMain/ansitotui/src")
 
             dependencies {
-                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.7")
+                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.7") {
+                    exclude(group = "com.fleeksoft.io", module = "io-core")
+                }
             }
         }
 
