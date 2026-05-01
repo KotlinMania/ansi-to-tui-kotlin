@@ -1,20 +1,27 @@
 @file:OptIn(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi::class)
 
 import com.vanniktech.maven.publish.SonatypeHost
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.DisableCacheInKotlinVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 
 plugins {
     kotlin("multiplatform") version "2.3.20"
+    id("com.android.kotlin.multiplatform.library") version "9.2.0"
     id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
 group = "io.github.kotlinmania"
-version = "0.1.3"
+version = "0.1.4"
 
 kotlin {
     applyDefaultHierarchyTemplate()
+
+    compilerOptions {
+        allWarningsAsErrors.set(true)
+    }
 
     val xcf = XCFramework("AnsiToTui")
 
@@ -32,6 +39,33 @@ kotlin {
     }
     linuxX64()
     mingwX64()
+    iosArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    iosX64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    iosSimulatorArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    js {
+        browser()
+        nodejs()
+    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        nodejs()
+    }
 
     targets.withType<KotlinNativeTarget>().configureEach {
         binaries.all {
@@ -47,7 +81,7 @@ kotlin {
             kotlin.srcDir("commonMain/ansitotui/src")
 
             dependencies {
-                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.7") {
+                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.8") {
                     exclude(group = "com.fleeksoft.io", module = "io-core")
                 }
             }
@@ -62,6 +96,23 @@ kotlin {
     }
 
     jvmToolchain(21)
+}
+
+kotlin {
+    androidLibrary {
+        namespace = "io.github.kotlinmania.ansitotui"
+        compileSdk = 34
+        minSdk = 24
+    }
+}
+
+val enableIosSimulatorTests =
+    providers.gradleProperty("enableIosSimulatorTests").map { it.toBoolean() }.orElse(false)
+
+tasks.withType<KotlinNativeTest>().configureEach {
+    if (!enableIosSimulatorTests.get() && (name == "iosX64Test" || name == "iosSimulatorArm64Test")) {
+        enabled = false
+    }
 }
 
 mavenPublishing {
