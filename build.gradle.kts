@@ -81,7 +81,7 @@ kotlin {
             kotlin.srcDir("commonMain/ansitotui/src")
 
             dependencies {
-                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.8") {
+                implementation("io.github.kotlinmania:ratatui-kotlin:0.1.9") {
                     exclude(group = "com.fleeksoft.io", module = "io-core")
                 }
             }
