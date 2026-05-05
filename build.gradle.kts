@@ -30,21 +30,9 @@ kotlin {
             xcf.add(this)
         }
     }
-    macosX64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
-    }
     linuxX64()
     mingwX64()
     iosArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
-    }
-    iosX64 {
         binaries.framework {
             baseName = "AnsiToTui"
             xcf.add(this)
@@ -124,7 +112,7 @@ val enableIosSimulatorTests =
     providers.gradleProperty("enableIosSimulatorTests").map { it.toBoolean() }.orElse(false)
 
 tasks.withType<KotlinNativeTest>().configureEach {
-    if (!enableIosSimulatorTests.get() && (name == "iosX64Test" || name == "iosSimulatorArm64Test")) {
+    if (!enableIosSimulatorTests.get() && name == "iosSimulatorArm64Test") {
         enabled = false
     }
 }
