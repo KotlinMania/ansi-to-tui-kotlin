@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.DisableCacheInKotlinVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 
 plugins {
@@ -24,6 +25,12 @@ kotlin {
     val xcf = XCFramework("AnsiToTui")
 
     macosArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    macosX64 {
         binaries.framework {
             baseName = "AnsiToTui"
             xcf.add(this)
@@ -59,6 +66,11 @@ kotlin {
         nodejs()
     }
 
+    swiftExport {
+        moduleName = "AnsiToTui"
+        flattenPackage = "io.github.kotlinmania.ansitotui"
+    }
+
     targets.withType<KotlinNativeTarget>().configureEach {
         binaries.all {
             disableNativeCache(
@@ -88,6 +100,12 @@ kotlin {
     }
 
     jvmToolchain(21)
+}
+
+rootProject.extensions.configure<YarnRootExtension>("kotlinYarn") {
+    resolution("diff", "8.0.3")
+    resolution("serialize-javascript", "7.0.5")
+    resolution("webpack", "5.106.2")
 }
 
 kotlin {
