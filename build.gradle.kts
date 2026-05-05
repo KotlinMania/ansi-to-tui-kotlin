@@ -1,6 +1,4 @@
 @file:OptIn(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi::class)
-
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.DisableCacheInKotlinVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -8,9 +6,9 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 
 plugins {
-    kotlin("multiplatform") version "2.3.20"
+    kotlin("multiplatform") version "2.3.21"
     id("com.android.kotlin.multiplatform.library") version "9.2.0"
-    id("com.vanniktech.maven.publish") version "0.30.0"
+    id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
 group = "io.github.kotlinmania"
@@ -26,12 +24,6 @@ kotlin {
     val xcf = XCFramework("AnsiToTui")
 
     macosArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
-    }
-    macosX64 {
         binaries.framework {
             baseName = "AnsiToTui"
             xcf.add(this)
@@ -120,7 +112,7 @@ tasks.withType<KotlinNativeTest>().configureEach {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
     signAllPublications()
 
     coordinates(group.toString(), "ansi-to-tui-kotlin", version.toString())
