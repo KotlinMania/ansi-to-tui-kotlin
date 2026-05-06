@@ -1,108 +1,57 @@
-# ansi-to-tui-kotlin
+# ansi-to-tui-kotlin in Kotlin
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-blue.svg?logo=kotlin)](https://kotlinlang.org)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
-[![GitHub](https://img.shields.io/badge/github-KotlinMania%2Fansi--to--tui--kotlin-blue?logo=github)](https://github.com/KotlinMania/ansi-to-tui-kotlin)
+[![GitHub link](https://img.shields.io/badge/GitHub-KotlinMania%2Fansi--to--tui--kotlin-blue.svg)](https://github.com/KotlinMania/ansi-to-tui-kotlin)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.kotlinmania/ansi-to-tui-kotlin)](https://central.sonatype.com/artifact/io.github.kotlinmania/ansi-to-tui-kotlin)
+[![Build status](https://img.shields.io/github/actions/workflow/status/KotlinMania/ansi-to-tui-kotlin/ci.yml?branch=main)](https://github.com/KotlinMania/ansi-to-tui-kotlin/actions)
 
-A **Kotlin Multiplatform Native** library to parse text with ANSI color codes and turn them into
-[`ratatui.text.Text`][Text]. This is a port of the Rust [ansi-to-tui] library by Uttarayan Mondal.
+This is a Kotlin Multiplatform line-by-line transliteration port of [`ratatui/ansi-to-tu`](https://github.com/ratatui/ansi-to-tui).
 
-## Overview
+**Original Project:** This port is based on [`ratatui/ansi-to-tu`](https://github.com/ratatui/ansi-to-tui). All design credit and project intent belong to the upstream authors; this repository is a faithful port to Kotlin Multiplatform with no behavioural changes intended.
 
-Parse ANSI escape sequences from terminal output and convert them to styled text objects
-compatible with ratatui-kotlin for TUI rendering.
+### Porting status
 
-| Color  | Supported | Examples                 |
-| ------ | :-------: | ------------------------ |
-| 24 bit |     ✓     | `\x1b[38;2;<R>;<G>;<B>m` |
-| 8 bit  |     ✓     | `\x1b[38;5;<N>m`         |
-| 4 bit  |     ✓     | `\x1b[30..37;40..47m`    |
-
-## Supported Platforms
-
-- macOS (arm64, x64)
-- Linux (x64)
-- Windows (x64 via MinGW)
-
-## Installation
-
-### As a Git Submodule (Recommended)
-
-This library is not yet published to Maven Central. The recommended approach is to include it as a
-git submodule or vendored dependency:
-
-```bash
-git submodule add https://github.com/KotlinMania/ansi-to-tui-kotlin.git
-```
-
-Then in your `settings.gradle.kts`:
-
-```kotlin
-include(":ansi-to-tui-kotlin")
-```
-
-And in your module's `build.gradle.kts`:
-
-```kotlin
-kotlin {
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":ansi-to-tui-kotlin"))
-            }
-        }
-    }
-}
-```
-
-### Future Maven Central Publication
-
-Once published to Maven Central, you'll be able to add it directly:
-
-```kotlin
-dependencies {
-    implementation("io.github.kotlinmania:ansi-to-tui-kotlin:1.0.0")
-}
-```
-
-## Quick Start
-
-```kotlin
-// Parse ANSI-colored text from a string
-val text = "\u001b[38;2;225;192;203mPink Text\u001b[0m".intoText()
-
-// Parse from a ByteArray
-val bytes = someFile.readBytes()
-val styledText = bytes.intoText()
-```
-
-
-Notes:
-- The build uses the Vanniktech Maven Publish plugin and publishes to Sonatype S01. CI passes these secrets to Gradle via environment variables (`ORG_GRADLE_PROJECT_*`).
-- For releases, tag the repo (e.g., `v0.1.0`) or run the workflow with `release=true`. For snapshots, keep the project version ending with `-SNAPSHOT` and push to `main`.
-
-## Supported Escape Sequences
-
-- **Style modifiers**: Bold, Italic, Underline, Blink, Reverse, Hidden, Strikethrough
-- **4-bit colors**: Standard (30-37, 40-47) and bright (90-97, 100-107)
-- **8-bit colors**: 256-color palette via `38;5;N` and `48;5;N`
-- **24-bit colors**: True color RGB via `38;2;R;G;B` and `48;2;R;G;B`
-- **Reset codes**: Full reset (0) and individual attribute resets
-
-## License
-
-Licensed under MIT license ([LICENSE](./LICENSE))
+This is an **in-progress port**. The goal is feature parity with the upstream Rust crate while providing a native Kotlin Multiplatform API. Every Kotlin file carries a `// port-lint: source <path>` header naming its upstream Rust counterpart so the AST-distance tool can track provenance.
 
 ---
 
-## Acknowledgments
+## About this Kotlin port
 
-This Kotlin Multiplatform port was created by **Sydney Renee** of [The Solace Project](mailto:sydney@solace.ofharmony.ai)
-for [KotlinMania](https://github.com/KotlinMania).
+### Installation
 
-Special thanks to the original author:
+```kotlin
+dependencies {
+    implementation("io.github.kotlinmania:ansi-to-tui-kotlin:0.1.4")
+}
+```
 
-- **Uttarayan Mondal** - Original [ansi-to-tui] Rust implementation
+### Building
 
-[Text]: https://docs.rs/ratatui/latest/ratatui/text/struct.Text.html
-[ansi-to-tui]: https://github.com/uttarayan21/ansi-to-tui
+```bash
+./gradlew build
+./gradlew test
+```
+
+### Targets
+
+- macOS arm64
+- Linux x64
+- Windows mingw-x64
+- iOS arm64 / simulator-arm64 (Swift export + XCFramework)
+- JS (browser + Node.js)
+- Wasm-JS (browser + Node.js)
+- Android (API 24+)
+
+### Porting guidelines
+
+See [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md) for translator discipline, port-lint header convention, and Rust → Kotlin idiom mapping.
+
+### License
+
+This Kotlin port is distributed under the same MIT license as the upstream [`ratatui/ansi-to-tu`](https://github.com/ratatui/ansi-to-tui). See [LICENSE](LICENSE) (and any sibling `LICENSE-*` / `NOTICE` files mirrored from upstream) for the full text.
+
+Original work copyrighted by the ansi-to-tu authors.  
+Kotlin port: Copyright (c) 2026 Sydney Renee and The Solace Project.
+
+### Acknowledgments
+
+Thanks to the [`ratatui/ansi-to-tu`](https://github.com/ratatui/ansi-to-tui) maintainers and contributors for the original Rust implementation. This port reproduces their work in Kotlin Multiplatform; bug reports about upstream design or behavior should go to the upstream repository.
