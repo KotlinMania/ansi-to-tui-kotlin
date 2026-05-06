@@ -1,10 +1,6 @@
-@file:OptIn(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi::class)
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.plugin.mpp.DisableCacheInKotlinVersion
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
-import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec
@@ -13,6 +9,7 @@ import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootEnvSpec
 
 plugins {
     kotlin("multiplatform") version "2.3.21"
+    kotlin("plugin.serialization") version "2.3.21"
     id("com.android.kotlin.multiplatform.library") version "9.2.0"
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
@@ -20,11 +17,29 @@ plugins {
 group = "io.github.kotlinmania"
 version = "0.1.4"
 
+val androidSdkDir: String? =
+    providers.environmentVariable("ANDROID_SDK_ROOT").orNull
+        ?: providers.environmentVariable("ANDROID_HOME").orNull
+
+if (androidSdkDir != null && file(androidSdkDir).exists()) {
+    val localProperties = rootProject.file("local.properties")
+    if (!localProperties.exists()) {
+        val sdkDirPropertyValue = file(androidSdkDir).absolutePath.replace("\\", "/")
+        localProperties.writeText("sdk.dir=$sdkDirPropertyValue")
+    }
+}
+
 kotlin {
     applyDefaultHierarchyTemplate()
 
+    sourceSets.all {
+        languageSettings.optIn("kotlin.time.ExperimentalTime")
+        languageSettings.optIn("kotlin.concurrent.atomics.ExperimentalAtomicApi")
+    }
+
     compilerOptions {
         allWarningsAsErrors.set(true)
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
     val xcf = XCFramework("AnsiToTui")
@@ -64,12 +79,13 @@ kotlin {
         flattenPackage = "io.github.kotlinmania.ansitotui"
     }
 
-    targets.withType<KotlinNativeTarget>().configureEach {
-        binaries.all {
-            disableNativeCache(
-                version = DisableCacheInKotlinVersion.`2_3_20`,
-                reason = "Fleeksoft charset/io klib cache crashes Kotlin/Native 2.3.20 during test linking."
-            )
+    android {
+        namespace = "io.github.kotlinmania.ansitotui"
+        compileSdk = 34
+        minSdk = 24
+        withHostTestBuilder {}.configure {}
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
         }
     }
 
@@ -91,7 +107,6 @@ kotlin {
             }
         }
     }
-
     jvmToolchain(21)
 }
 
@@ -113,11 +128,10 @@ rootProject.extensions.configure<WasmYarnRootEnvSpec>("kotlinWasmYarnSpec") {
 
 rootProject.extensions.configure<YarnRootExtension>("kotlinYarn") {
     resolution("diff", "8.0.3")
-    resolution("serialize-javascript", "7.0.5")
-    resolution("webpack", "5.106.2")
-
     resolution("**/diff", "8.0.3")
+    resolution("serialize-javascript", "7.0.5")
     resolution("**/serialize-javascript", "7.0.5")
+    resolution("webpack", "5.106.2")
     resolution("**/webpack", "5.106.2")
     resolution("follow-redirects", "1.16.0")
     resolution("**/follow-redirects", "1.16.0")
@@ -151,27 +165,6 @@ rootProject.extensions.configure<NodeJsRootExtension>("kotlinNodeJs") {
     versions.kotlinWebHelpers.version = "3.1.0"
 }
 
-kotlin {
-    android {
-        namespace = "io.github.kotlinmania.ansitotui"
-        compileSdk = 34
-        minSdk = 24
-        withHostTestBuilder {}.configure {}
-        withDeviceTestBuilder {
-            sourceSetTreeName = "test"
-        }
-    }
-}
-
-val enableIosSimulatorTests =
-    providers.gradleProperty("enableIosSimulatorTests").map { it.toBoolean() }.orElse(false)
-
-tasks.withType<KotlinNativeTest>().configureEach {
-    if (!enableIosSimulatorTests.get() && name == "iosSimulatorArm64Test") {
-        enabled = false
-    }
-}
-
 mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
@@ -180,8 +173,8 @@ mavenPublishing {
 
     pom {
         name.set("ansi-to-tui-kotlin")
-        description.set("Kotlin Multiplatform library for converting ANSI escape sequences to ratatui Text")
-        inceptionYear.set("2024")
+        description.set("Kotlin Multiplatform port of ratatui/ansi-to-tu - Convert ANSI color and style codes into Ratatui Text")
+        inceptionYear.set("2026")
         url.set("https://github.com/KotlinMania/ansi-to-tui-kotlin")
 
         licenses {
@@ -209,20 +202,16 @@ mavenPublishing {
     }
 }
 
-// CodeQL's Gradle autobuild invokes `./gradlew testClasses`, which is a
-// JVM-convention task that Kotlin Multiplatform projects without a JVM
-// target do not provide. Without it, CodeQL aborts with
-// `Task 'testClasses' not found in root project` and skips the scan.
-// Register an aggregate task that depends on every per-target
-// test-compile task (jsTestClasses, wasmJsTestClasses, and the
-// compileTestKotlin<Target> tasks for native targets) so the convention
-// call resolves.
-tasks.register("testClasses") {
-    description = "Aggregate test-compile task for CodeQL and other JVM-convention callers."
+tasks.register("test") {
     group = "verification"
-    dependsOn(tasks.matching { other ->
-        val n = other.name
-        n != "testClasses" &&
-            (n.endsWith("TestClasses") || n.startsWith("compileTestKotlin"))
-    })
+    description =
+        "Runs a portable test suite (macOS + JS + WasmJS). Android and non-host native targets are intentionally excluded."
+
+    val defaultTestTasks = listOf(
+        "macosArm64Test",
+        "jsNodeTest",
+        "wasmJsNodeTest",
+    )
+
+    dependsOn(defaultTestTasks.mapNotNull { taskName -> tasks.findByName(taskName) })
 }
