@@ -139,7 +139,7 @@ sealed class AnsiCode {
             104 -> BackgroundColor(Color.LightBlue)
             105 -> BackgroundColor(Color.LightMagenta)
             106 -> BackgroundColor(Color.LightCyan)
-            107 -> ForegroundColor(Color.White)
+            107 -> BackgroundColor(Color.White)
             else -> Code(listOf(code))
         }
     }
