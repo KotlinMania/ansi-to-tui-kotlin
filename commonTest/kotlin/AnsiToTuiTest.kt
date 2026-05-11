@@ -332,6 +332,26 @@ class AnsiToTuiTest {
         }
     }
 
+    @Test
+    fun testBright4BitBackgroundColors() {
+        // Test bright 4-bit background colors (100-107)
+        val colorMap = mapOf(
+            100 to Color.DarkGray,
+            101 to Color.LightRed,
+            102 to Color.LightGreen,
+            103 to Color.LightYellow,
+            104 to Color.LightBlue,
+            105 to Color.LightMagenta,
+            106 to Color.LightCyan,
+            107 to Color.White
+        )
+        for ((code, color) in colorMap) {
+            val bytes = "\u001b[${code}mTEST"
+            val output = Text.from(Span.styled("TEST", Style.default().bg(color)))
+            testParsing(bytes, output)
+        }
+    }
+
     // ============================================================================
     // Extension function tests
     // ============================================================================
