@@ -56,6 +56,7 @@ kotlin {
     }
     linuxX64()
     mingwX64()
+
     iosArm64 {
         binaries.framework {
             baseName = "AnsiToTui"
@@ -68,6 +69,58 @@ kotlin {
             xcf.add(this)
         }
     }
+    iosX64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+
+    tvosArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    tvosSimulatorArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+
+    watchosArm32 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    watchosArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    watchosDeviceArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+    watchosSimulatorArm64 {
+        binaries.framework {
+            baseName = "AnsiToTui"
+            xcf.add(this)
+        }
+    }
+
+    linuxArm64()
+
+    androidNativeArm32()
+    androidNativeArm64()
+    androidNativeX86()
+    androidNativeX64()
+
     js {
         browser()
         nodejs()
@@ -75,6 +128,10 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        nodejs()
+    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmWasi {
         nodejs()
     }
 
@@ -249,6 +306,7 @@ dependencies {
     codeqlSourceClasspath("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0")
     codeqlSourceClasspath("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.8.0")
     codeqlSourceClasspath("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.4.0")
+    codeqlSourceClasspath("io.github.kotlinmania:ratatui-kotlin:0.1.9")
 }
 
 val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
@@ -311,6 +369,8 @@ tasks.register("test") {
         "macosArm64Test",
         "jsNodeTest",
         "wasmJsNodeTest",
+        "compileAndroidMain",
+        "assembleUnitTest",
     )
 
     dependsOn(defaultTestTasks.mapNotNull { taskName -> tasks.findByName(taskName) })
