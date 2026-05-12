@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.ClasspathNormalizer
 import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -20,18 +21,6 @@ plugins {
 
 group = "io.github.kotlinmania"
 version = "0.1.4"
-
-val androidSdkDir: String? =
-    providers.environmentVariable("ANDROID_SDK_ROOT").orNull
-        ?: providers.environmentVariable("ANDROID_HOME").orNull
-
-if (androidSdkDir != null && file(androidSdkDir).exists()) {
-    val localProperties = rootProject.file("local.properties")
-    if (!localProperties.exists()) {
-        val sdkDirPropertyValue = file(androidSdkDir).absolutePath.replace("\\", "/")
-        localProperties.writeText("sdk.dir=$sdkDirPropertyValue")
-    }
-}
 
 kotlin {
     applyDefaultHierarchyTemplate()
@@ -323,7 +312,7 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
     }
     val sentinelDir = layout.buildDirectory.dir("generated/codeql-empty-source")
     inputs.files(sources).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(codeqlSourceClasspath).withNormalizer(org.gradle.normalization.ClasspathNormalizer::class.java)
+    inputs.files(codeqlSourceClasspath).withNormalizer(ClasspathNormalizer::class.java)
     outputs.dir(outDir)
     outputs.dir(sentinelDir)
 
@@ -363,7 +352,8 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
 tasks.register("test") {
     group = "verification"
     description =
-        "Runs a portable test suite (macOS + JS + WasmJS). Android and non-host native targets are intentionally excluded."
+        "Runs the host-portable test suite (macOS + JS + WasmJS + Android unit). " +
+        "Non-host native targets (mingwX64, linuxX64) only run on their own host."
 
     val defaultTestTasks = listOf(
         "macosArm64Test",
