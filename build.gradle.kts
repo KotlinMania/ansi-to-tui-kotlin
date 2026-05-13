@@ -1,9 +1,10 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.ClasspathNormalizer
 import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
@@ -49,72 +50,41 @@ kotlin {
     val xcf = XCFramework("AnsiToTui")
 
     macosArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
-    linuxX64()
-    mingwX64()
-
     iosArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     iosSimulatorArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     iosX64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
 
     tvosArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     tvosSimulatorArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
 
     watchosArm32 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     watchosArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     watchosDeviceArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     watchosSimulatorArm64 {
-        binaries.framework {
-            baseName = "AnsiToTui"
-            xcf.add(this)
-        }
+        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
 
+    linuxX64()
     linuxArm64()
+    mingwX64()
 
     androidNativeArm32()
     androidNativeArm64()
@@ -169,6 +139,24 @@ kotlin {
         }
     }
     jvmToolchain(21)
+}
+
+tasks.withType<AbstractTestTask>().configureEach {
+    testLogging {
+        events(
+            TestLogEvent.STARTED,
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED,
+            TestLogEvent.FAILED,
+            TestLogEvent.STANDARD_OUT,
+            TestLogEvent.STANDARD_ERROR,
+        )
+        exceptionFormat = TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+    }
 }
 
 rootProject.extensions.configure<NodeJsEnvSpec>("kotlinNodeJsSpec") {
@@ -263,24 +251,6 @@ mavenPublishing {
     }
 }
 
-tasks.withType<AbstractTestTask>().configureEach {
-    testLogging {
-        events(
-            TestLogEvent.STARTED,
-            TestLogEvent.PASSED,
-            TestLogEvent.SKIPPED,
-            TestLogEvent.FAILED,
-            TestLogEvent.STANDARD_OUT,
-            TestLogEvent.STANDARD_ERROR,
-        )
-        exceptionFormat = TestExceptionFormat.FULL
-        showCauses = true
-        showExceptions = true
-        showStackTraces = true
-        showStandardStreams = true
-    }
-}
-
 // ---------------------------------------------------------------------------
 // CodeQL Java/Kotlin extraction task
 //
@@ -323,7 +293,7 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
     }
     val sentinelDir = layout.buildDirectory.dir("generated/codeql-empty-source")
     inputs.files(sources).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(codeqlSourceClasspath).withNormalizer(org.gradle.normalization.ClasspathNormalizer::class.java)
+    inputs.files(codeqlSourceClasspath).withNormalizer(ClasspathNormalizer::class.java)
     outputs.dir(outDir)
     outputs.dir(sentinelDir)
 
@@ -360,10 +330,17 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
     }
 }
 
+tasks.register<Exec>("setupAndroidSdk") {
+    group = "setup"
+    description = "Downloads and configures the project-local Android SDK."
+    commandLine("./setup-android-sdk.sh")
+}
+
 tasks.register("test") {
     group = "verification"
     description =
-        "Runs a portable test suite (macOS + JS + WasmJS). Android and non-host native targets are intentionally excluded."
+        "Runs the host-portable test suite (macOS + JS + WasmJS + Android unit). " +
+        "Non-host native targets (mingwX64, linuxX64) only run on their own host."
 
     val defaultTestTasks = listOf(
         "macosArm64Test",
