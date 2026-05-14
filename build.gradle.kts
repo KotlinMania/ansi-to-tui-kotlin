@@ -21,6 +21,7 @@ plugins {
 
 group = "io.github.kotlinmania"
 version = "0.1.4"
+
 val androidSdkDir: String? =
     providers.environmentVariable("ANDROID_SDK_ROOT").orNull
         ?: providers.environmentVariable("ANDROID_HOME").orNull
@@ -327,6 +328,12 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
             "-opt-in", "kotlin.concurrent.atomics.ExperimentalAtomicApi",
         ) + sourceFiles.map { it.absolutePath }
     }
+}
+
+tasks.register<Exec>("setupAndroidSdk") {
+    group = "setup"
+    description = "Downloads and configures the project-local Android SDK."
+    commandLine("./setup-android-sdk.sh")
 }
 
 tasks.register("test") {
