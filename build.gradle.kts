@@ -62,34 +62,8 @@ kotlin {
         binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
 
-    tvosArm64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
-    }
-    tvosSimulatorArm64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
-    }
-
-    watchosArm32 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
-    }
-    watchosArm64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
-    }
-    watchosDeviceArm64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
-    }
-    watchosSimulatorArm64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
-    }
-
     linuxX64()
-    linuxArm64()
     mingwX64()
-
-    androidNativeArm32()
-    androidNativeArm64()
-    androidNativeX86()
-    androidNativeX64()
 
     js {
         browser()
@@ -100,11 +74,6 @@ kotlin {
         browser()
         nodejs()
     }
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmWasi {
-        nodejs()
-    }
-
     swiftExport {
         moduleName = "AnsiToTui"
         flattenPackage = "io.github.kotlinmania.ansitotui"
@@ -268,6 +237,12 @@ val codeqlSourceClasspath: Configuration by configurations.creating {
     isCanBeConsumed = false
 }
 
+val codeqlAndroidAar: Configuration by configurations.creating {
+    description = "Android AAR artifacts for CodeQL classpath extraction (classes.jar only)"
+    isCanBeResolved = true
+    isCanBeConsumed = false
+}
+
 dependencies {
     codeqlKotlinc("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.21")
     codeqlSourceClasspath("org.jetbrains.kotlin:kotlin-stdlib:2.3.21")
@@ -276,7 +251,7 @@ dependencies {
     codeqlSourceClasspath("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0")
     codeqlSourceClasspath("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.8.0")
     codeqlSourceClasspath("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.4.0")
-    codeqlSourceClasspath("io.github.kotlinmania:ratatui-kotlin:0.1.9")
+    codeqlAndroidAar("io.github.kotlinmania:ratatui-kotlin-android:0.1.9@aar")
 }
 
 val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
@@ -288,17 +263,37 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
     mainClass.set("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
 
     val outDir = layout.buildDirectory.dir("classes/kotlin/codeql-jvm")
+    val aarExtractDir = layout.buildDirectory.dir("codeql/android-aar")
     val sources = kotlin.sourceSets.getByName("commonMain").kotlin.asFileTree.matching {
         include("**/*.kt")
     }
     val sentinelDir = layout.buildDirectory.dir("generated/codeql-empty-source")
     inputs.files(sources).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(codeqlSourceClasspath).withNormalizer(ClasspathNormalizer::class.java)
+    inputs.files(codeqlAndroidAar).withNormalizer(ClasspathNormalizer::class.java)
     outputs.dir(outDir)
+    outputs.dir(aarExtractDir)
     outputs.dir(sentinelDir)
 
     doFirst {
         outDir.get().asFile.mkdirs()
+        val extractedJars = mutableListOf<File>()
+        for (aar in codeqlAndroidAar.resolve()) {
+            val extractTarget = aarExtractDir.get().asFile.resolve(aar.nameWithoutExtension)
+            extractTarget.mkdirs()
+            copy {
+                from(zipTree(aar))
+                include("classes.jar")
+                into(extractTarget)
+            }
+            val classesJar = extractTarget.resolve("classes.jar")
+            if (classesJar.exists()) {
+                extractedJars += classesJar
+            }
+        }
+        val fullClasspath =
+            (codeqlSourceClasspath.resolve() + extractedJars)
+                .joinToString(File.pathSeparator) { it.absolutePath }
         val sourceFiles = sources.files.toMutableList()
         if (sourceFiles.isEmpty()) {
             val sentinelFile = sentinelDir.get().asFile.resolve("io/github/kotlinmania/codeql/_CodeqlEmptySource.kt")
@@ -317,7 +312,7 @@ val codeqlCompileJvm = tasks.register<JavaExec>("codeqlCompileJvm") {
         }
         args = listOf(
             "-d", outDir.get().asFile.absolutePath,
-            "-classpath", codeqlSourceClasspath.asPath,
+            "-classpath", fullClasspath,
             "-jvm-target", "21",
             "-no-stdlib",
             "-no-reflect",
