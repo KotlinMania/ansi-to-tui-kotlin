@@ -56,10 +56,18 @@ kotlin {
         binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
     }
     iosSimulatorArm64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
+        binaries.framework {
+            baseName = "AnsiToTui"
+            isStatic = true
+            xcf.add(this)
+        }
     }
     iosX64 {
-        binaries.framework { baseName = "AnsiToTui"; xcf.add(this) }
+        binaries.framework {
+            baseName = "AnsiToTui"
+            isStatic = true
+            xcf.add(this)
+        }
     }
 
     linuxX64()
