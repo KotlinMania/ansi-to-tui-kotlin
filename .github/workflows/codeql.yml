@@ -81,6 +81,10 @@ jobs:
         if: matrix.language == 'java-kotlin'
         uses: gradle/actions/setup-gradle@v6.1.0
 
+      - name: Prepare project Android SDK
+        if: matrix.language == 'java-kotlin'
+        run: ./gradlew --no-daemon setupAndroidSdk --no-configuration-cache
+
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
