@@ -653,6 +653,7 @@ become deletable.
    declaration public; `@HiddenFromObjC` is the escape hatch when
    there is.
 
+
    **DO NOT** scope `allWarningsAsErrors=false` to the
    `compileSwiftExportMain*` task family for either trigger. That was
    tried first (itertools-kotlin PR #22 for trigger 8a) and is symptom
@@ -1064,6 +1065,7 @@ target, so the annotation must go on each class / property / function
 individually; the file-level `@file:OptIn(ExperimentalObjCRefinement)`
 is what enables those per-declaration annotations.
 
+>>>>>>> origin/main
 ### Tests
 
 SAM-convertible interfaces work the same as function types in tests
@@ -1172,6 +1174,7 @@ a single PR ahead of CI evidence):
    SAM-convert automatically; `StableRef<TypeName>` references stay
    the same because the type name didn't change, only its kind.
 
+>>>>>>> origin/main
 ---
 
 ## Why the recipe is in every repo
