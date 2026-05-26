@@ -33,14 +33,10 @@ name: "CodeQL Advanced"
 # though autobuild is the template default.
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  # Weekly periodic scan catches supply-chain CVEs that appear after merge.
   schedule:
     - cron: '44 16 * * 0'
 
+  workflow_dispatch:
 permissions:
   contents: read
 
@@ -84,6 +80,10 @@ jobs:
       - name: Setup Gradle
         if: matrix.language == 'java-kotlin'
         uses: gradle/actions/setup-gradle@v6.1.0
+
+      - name: Prepare project Android SDK
+        if: matrix.language == 'java-kotlin'
+        run: ./gradlew --no-daemon setupAndroidSdk --no-configuration-cache
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
