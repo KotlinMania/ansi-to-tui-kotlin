@@ -35,6 +35,7 @@ on:
     - cron: "0 7 * * 1"
   workflow_dispatch:
 
+  workflow_dispatch:
 permissions:
   contents: read
 
@@ -78,6 +79,10 @@ jobs:
       - name: Setup Gradle
         if: matrix.language == 'java-kotlin'
         uses: gradle/actions/setup-gradle@v6.1.0
+
+      - name: Prepare project Android SDK
+        if: matrix.language == 'java-kotlin'
+        run: ./gradlew --no-daemon setupAndroidSdk --no-configuration-cache
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
