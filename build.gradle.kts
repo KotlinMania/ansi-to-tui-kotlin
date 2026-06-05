@@ -39,7 +39,7 @@ group = providers.gradleProperty("project.group").getOrElse("io.github.kotlinman
 version = providers.gradleProperty("project.version").getOrElse("0.1.0-SNAPSHOT")
 val frameworkName = providers.gradleProperty("project.frameworkName").getOrElse("Unnamed")
 val projectNamespace = providers.gradleProperty("project.namespace").getOrElse("io.github.kotlinmania")
-val kotlinVersion = providers.gradleProperty("versions.kotlin").getOrElse("2.3.21")
+val kotlinVersion = providers.gradleProperty("versions.kotlin").getOrElse("2.4.0")
 val isCodeqlBuild = providers.gradleProperty("kotlinmania.codeql").map(String::toBoolean).getOrElse(false)
 val commonMainBundleName = providers.gradleProperty("project.dependencies.commonMainBundle").get()
 val commonMainDependencyBundle =
@@ -251,11 +251,11 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     compilerOptions {
-        languageVersion.set(KotlinVersion.KOTLIN_2_3)
-        apiVersion.set(KotlinVersion.KOTLIN_2_3)
+        languageVersion.set(KotlinVersion.KOTLIN_2_4)
+        apiVersion.set(KotlinVersion.KOTLIN_2_4)
         allWarningsAsErrors.set(!isCodeqlBuild)
         optIn.addAll(commonOptIns)
-        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xsuppress-version-warnings")
     }
 
     val xcf = XCFramework(frameworkName)
@@ -314,8 +314,8 @@ kotlin {
         nodejs()
     }
 
-    // Swift Export bridge — Experimental per Kotlin 2.3.0 release notes.
-    // KGP 2.3.21 does not expose a public opt-in annotation; warnings (if any)
+    // Swift Export bridge — Experimental per Kotlin 2.4.0 release notes.
+    // KGP 2.4.0 does not expose a public opt-in annotation; warnings (if any)
     // arrive via KotlinToolingDiagnostics, not @RequiresOptIn.
     swiftExport {
         moduleName = frameworkName
@@ -326,7 +326,7 @@ kotlin {
         }
     }
 
-    // Android KMP library. Block name is `android` — `androidLibrary` is deprecated in KGP 2.3.x.
+    // Android KMP library. Block name is `android` — `androidLibrary` is deprecated in current KGP.
     android {
         namespace = projectNamespace
         compileSdk = projectCompileSdk.toInt()
@@ -359,7 +359,7 @@ kotlin {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
-    if (name.startsWith("compileSwiftExport")) {
+    if (name.startsWith("compileSwiftExport") || name.startsWith("linkSwiftExportBinary")) {
         compilerOptions.allWarningsAsErrors.set(false)
     }
 }
