@@ -1065,7 +1065,6 @@ target, so the annotation must go on each class / property / function
 individually; the file-level `@file:OptIn(ExperimentalObjCRefinement)`
 is what enables those per-declaration annotations.
 
->>>>>>> origin/main
 ### Tests
 
 SAM-convertible interfaces work the same as function types in tests
@@ -1174,7 +1173,7 @@ a single PR ahead of CI evidence):
    SAM-convert automatically; `StableRef<TypeName>` references stay
    the same because the type name didn't change, only its kind.
 
->>>>>>> origin/main
+
 ---
 
 ## Why the recipe is in every repo
