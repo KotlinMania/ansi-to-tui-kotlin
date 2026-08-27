@@ -1,3 +1,4 @@
+// port-lint: source parser.rs
 /**
  * ANSI escape sequence parser.
  *
@@ -28,8 +29,9 @@ import ratatui.text.Text
 private enum class ColorType {
     /** Eight bit color (256 color palette) */
     EightBit,
+
     /** 24-bit color or true color (RGB) */
-    TrueColor
+    TrueColor,
 }
 
 /**
@@ -37,7 +39,7 @@ private enum class ColorType {
  */
 private data class AnsiItem(
     val code: AnsiCode,
-    val color: Color? = null
+    val color: Color? = null,
 )
 
 /**
@@ -45,7 +47,7 @@ private data class AnsiItem(
  */
 private data class AnsiStates(
     val items: MutableList<AnsiItem> = mutableListOf(),
-    val style: Style = Style.default()
+    val style: Style = Style.default(),
 ) {
     /**
      * Convert accumulated items to a Style.
@@ -57,35 +59,36 @@ private data class AnsiStates(
             return Style.reset()
         }
         for (item in items) {
-            result = when (item.code) {
-                is AnsiCode.Reset -> Style.reset()
-                is AnsiCode.Bold -> result.addModifier(Modifier.BOLD)
-                is AnsiCode.Faint -> result.addModifier(Modifier.DIM)
-                is AnsiCode.Normal -> result.removeModifier(Modifier.BOLD or Modifier.DIM)
-                is AnsiCode.Italic -> result.addModifier(Modifier.ITALIC)
-                is AnsiCode.NotItalic -> result.removeModifier(Modifier.ITALIC)
-                is AnsiCode.Underline -> result.addModifier(Modifier.UNDERLINED)
-                is AnsiCode.UnderlineOff -> result.removeModifier(Modifier.UNDERLINED)
-                is AnsiCode.SlowBlink -> result.addModifier(Modifier.SLOW_BLINK)
-                is AnsiCode.RapidBlink -> result.addModifier(Modifier.RAPID_BLINK)
-                is AnsiCode.BlinkOff -> result.removeModifier(Modifier.SLOW_BLINK or Modifier.RAPID_BLINK)
-                is AnsiCode.Reverse -> result.addModifier(Modifier.REVERSED)
-                is AnsiCode.Conceal -> result.addModifier(Modifier.HIDDEN)
-                is AnsiCode.Reveal -> result.removeModifier(Modifier.HIDDEN)
-                is AnsiCode.CrossedOut -> result.addModifier(Modifier.CROSSED_OUT)
-                is AnsiCode.CrossedOutOff -> result.removeModifier(Modifier.CROSSED_OUT)
-                is AnsiCode.DefaultForegroundColor -> result.fg(Color.Reset)
-                is AnsiCode.DefaultBackgroundColor -> result.bg(Color.Reset)
-                is AnsiCode.SetForegroundColor -> {
-                    item.color?.let { result.fg(it) } ?: result
+            result =
+                when (item.code) {
+                    is AnsiCode.Reset -> Style.reset()
+                    is AnsiCode.Bold -> result.addModifier(Modifier.BOLD)
+                    is AnsiCode.Faint -> result.addModifier(Modifier.DIM)
+                    is AnsiCode.Normal -> result.removeModifier(Modifier.BOLD or Modifier.DIM)
+                    is AnsiCode.Italic -> result.addModifier(Modifier.ITALIC)
+                    is AnsiCode.NotItalic -> result.removeModifier(Modifier.ITALIC)
+                    is AnsiCode.Underline -> result.addModifier(Modifier.UNDERLINED)
+                    is AnsiCode.UnderlineOff -> result.removeModifier(Modifier.UNDERLINED)
+                    is AnsiCode.SlowBlink -> result.addModifier(Modifier.SLOW_BLINK)
+                    is AnsiCode.RapidBlink -> result.addModifier(Modifier.RAPID_BLINK)
+                    is AnsiCode.BlinkOff -> result.removeModifier(Modifier.SLOW_BLINK or Modifier.RAPID_BLINK)
+                    is AnsiCode.Reverse -> result.addModifier(Modifier.REVERSED)
+                    is AnsiCode.Conceal -> result.addModifier(Modifier.HIDDEN)
+                    is AnsiCode.Reveal -> result.removeModifier(Modifier.HIDDEN)
+                    is AnsiCode.CrossedOut -> result.addModifier(Modifier.CROSSED_OUT)
+                    is AnsiCode.CrossedOutOff -> result.removeModifier(Modifier.CROSSED_OUT)
+                    is AnsiCode.DefaultForegroundColor -> result.fg(Color.Reset)
+                    is AnsiCode.DefaultBackgroundColor -> result.bg(Color.Reset)
+                    is AnsiCode.SetForegroundColor -> {
+                        item.color?.let { result.fg(it) } ?: result
+                    }
+                    is AnsiCode.SetBackgroundColor -> {
+                        item.color?.let { result.bg(it) } ?: result
+                    }
+                    is AnsiCode.ForegroundColor -> result.fg(item.code.color)
+                    is AnsiCode.BackgroundColor -> result.bg(item.code.color)
+                    else -> result
                 }
-                is AnsiCode.SetBackgroundColor -> {
-                    item.color?.let { result.bg(it) } ?: result
-                }
-                is AnsiCode.ForegroundColor -> result.fg(item.code.color)
-                is AnsiCode.BackgroundColor -> result.bg(item.code.color)
-                else -> result
-            }
         }
         return result
     }
@@ -99,18 +102,19 @@ private data class AnsiStates(
  *
  * @property data The byte array being parsed.
  */
-private class Parser(private val data: ByteArray) {
+private class Parser(
+    private val data: ByteArray,
+) {
     var pos: Int = 0
 
     val remaining: Int get() = data.size - pos
     val isAtEnd: Boolean get() = pos >= data.size
 
     fun peek(): Byte? = if (pos < data.size) data[pos] else null
+
     fun peekChar(): Char? = peek()?.toInt()?.toChar()
 
-    fun advance(): Byte? {
-        return if (pos < data.size) data[pos++] else null
-    }
+    fun advance(): Byte? = if (pos < data.size) data[pos++] else null
 
     fun advanceChar(): Char? = advance()?.toInt()?.toChar()
 
@@ -251,12 +255,13 @@ private fun parseSpan(parser: Parser, lastStyle: Style): Span {
 
     // Take text until escape or newline
     val textData = parser.takeWhile { it != ESC && it != '\n'.code.toByte() }
-    val text = try {
-        textData.decodeToString()
-    } catch (e: Exception) {
-        // Invalid UTF-8, skip
-        ""
-    }
+    val text =
+        try {
+            textData.decodeToString()
+        } catch (e: Exception) {
+            // Invalid UTF-8, skip
+            ""
+        }
 
     return Span.styled(text, currentStyle)
 }
@@ -296,14 +301,14 @@ private fun parseStyle(parser: Parser, style: Style): Style? {
         parser.skipOptionalSemicolon()
     }
 
-    // Expect 'm' terminator
+    // Expect m terminator
     if (parser.peek() != 'm'.code.toByte()) {
         // Not a valid SGR sequence, try to recover
         parser.pos = startPos + 1 // skip just the ESC
         consumeAnyEscapeSequence(parser)
         return null
     }
-    parser.advance() // consume 'm'
+    parser.advance() // consume m byte
 
     return AnsiStates(items, style).toStyle()
 }
@@ -349,13 +354,14 @@ private fun parseSgrItem(parser: Parser): AnsiItem? {
     val code = parser.parseUByte() ?: return null
     val ansiCode = AnsiCode.from(code)
 
-    val color = when (ansiCode) {
-        is AnsiCode.SetForegroundColor, is AnsiCode.SetBackgroundColor -> {
-            parser.skipOptionalSemicolon()
-            parseColor(parser)
+    val color =
+        when (ansiCode) {
+            is AnsiCode.SetForegroundColor, is AnsiCode.SetBackgroundColor -> {
+                parser.skipOptionalSemicolon()
+                parseColor(parser)
+            }
+            else -> null
         }
-        else -> null
-    }
 
     return AnsiItem(ansiCode, color)
 }
