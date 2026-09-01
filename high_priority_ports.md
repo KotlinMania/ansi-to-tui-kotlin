@@ -11,7 +11,7 @@ This list is complete and includes function/type detail for every matched file. 
 | Rank | Source | Target | Function similarity | Deps | Functions | Missing functions | Types | Missing types | SymDeficit | SrcSymbols | Priority |
 |------|--------|--------|------------|------|-----------|-------------------|-------|---------------|-----------|------------|----------|
 | 1 | `error` | `ansitotui.Error` | 0.28 | 1 | 1/1 matched (target 4) | _none_ | 1/1 matched (target 5) | _none_ | 0 | 2 | 1000207.2 |
-| 2 | `parser` | `ansitotui.Parser` | 0.00 | 0 | 0/16 matched (target 22) | `from`, `text`, `text_fast`, `newline`, `line`, `line_fast`, `span`, `span_fast`, `style`, `ansi_sgr_code`, `any_escape_sequence`, `ansi_sgr_item`, `color`, `color_type`, `color_test`, `ansi_items_test` | 3/3 matched (target 4) | _none_ | 16 | 19 | 161910.0 |
+| 2 | `parser` | `ansitotui.Parser` | 0.46 | 0 | 16/16 matched (target 18) | _none_ | 3/3 matched (target 4) | _none_ | 0 | 19 | 1905.4 |
 | 3 | `lib` | `ansitotui.IntoText` | 0.25 | 0 | 2/2 matched (target 5) | _none_ | 1/1 matched | _none_ | 0 | 3 | 307.5 |
 | 4 | `code` | `ansitotui.Code` | 0.66 | 0 | 1/1 matched | _none_ | 1/1 matched (target 30) | _none_ | 0 | 2 | 203.4 |
 

@@ -1,19 +1,4 @@
 // port-lint: source parser.rs
-/**
- * ANSI escape sequence parser.
- *
- * This module provides the core parsing logic for converting byte sequences containing
- * ANSI escape codes into ratatui [Text] objects with appropriate styling.
- *
- * The parser supports:
- * - SGR (Select Graphic Rendition) codes for text styling
- * - 4-bit colors (standard and bright)
- * - 8-bit indexed colors (256 color palette)
- * - 24-bit true colors (RGB)
- * - Style modifiers (bold, italic, underline, blink, etc.)
- *
- * Invalid or unrecognized escape sequences are silently ignored.
- */
 package ansitotui
 
 import ratatui.style.Color
@@ -26,18 +11,18 @@ import ratatui.text.Text
 /**
  * Color type indicator for extended colors (8-bit and 24-bit).
  */
-private enum class ColorType {
-    /** Eight bit color (256 color palette) */
+internal enum class ColorType {
+    /** Eight Bit color */
     EightBit,
 
-    /** 24-bit color or true color (RGB) */
+    /** 24-bit color or true color */
     TrueColor,
 }
 
 /**
  * An ANSI item with code and optional color.
  */
-private data class AnsiItem(
+internal data class AnsiItem(
     val code: AnsiCode,
     val color: Color? = null,
 )
@@ -45,370 +30,337 @@ private data class AnsiItem(
 /**
  * ANSI state accumulator.
  */
-private data class AnsiStates(
-    val items: MutableList<AnsiItem> = mutableListOf(),
+internal data class AnsiStates(
+    val items: List<AnsiItem> = emptyList(),
     val style: Style = Style.default(),
 ) {
-    /**
-     * Convert accumulated items to a Style.
-     */
-    fun toStyle(): Style {
-        var result = style
-        if (items.isEmpty()) {
-            // [m should be treated as a reset as well
-            return Style.reset()
-        }
-        for (item in items) {
-            result =
-                when (item.code) {
-                    is AnsiCode.Reset -> Style.reset()
-                    is AnsiCode.Bold -> result.addModifier(Modifier.BOLD)
-                    is AnsiCode.Faint -> result.addModifier(Modifier.DIM)
-                    is AnsiCode.Normal -> result.removeModifier(Modifier.BOLD or Modifier.DIM)
-                    is AnsiCode.Italic -> result.addModifier(Modifier.ITALIC)
-                    is AnsiCode.NotItalic -> result.removeModifier(Modifier.ITALIC)
-                    is AnsiCode.Underline -> result.addModifier(Modifier.UNDERLINED)
-                    is AnsiCode.UnderlineOff -> result.removeModifier(Modifier.UNDERLINED)
-                    is AnsiCode.SlowBlink -> result.addModifier(Modifier.SLOW_BLINK)
-                    is AnsiCode.RapidBlink -> result.addModifier(Modifier.RAPID_BLINK)
-                    is AnsiCode.BlinkOff -> result.removeModifier(Modifier.SLOW_BLINK or Modifier.RAPID_BLINK)
-                    is AnsiCode.Reverse -> result.addModifier(Modifier.REVERSED)
-                    is AnsiCode.Conceal -> result.addModifier(Modifier.HIDDEN)
-                    is AnsiCode.Reveal -> result.removeModifier(Modifier.HIDDEN)
-                    is AnsiCode.CrossedOut -> result.addModifier(Modifier.CROSSED_OUT)
-                    is AnsiCode.CrossedOutOff -> result.removeModifier(Modifier.CROSSED_OUT)
-                    is AnsiCode.DefaultForegroundColor -> result.fg(Color.Reset)
-                    is AnsiCode.DefaultBackgroundColor -> result.bg(Color.Reset)
-                    is AnsiCode.SetForegroundColor -> {
-                        item.color?.let { result.fg(it) } ?: result
-                    }
-                    is AnsiCode.SetBackgroundColor -> {
-                        item.color?.let { result.bg(it) } ?: result
-                    }
-                    is AnsiCode.ForegroundColor -> result.fg(item.code.color)
-                    is AnsiCode.BackgroundColor -> result.bg(item.code.color)
-                    else -> result
+    fun toStyle(): Style = from(this)
+}
+
+/**
+ * Convert AnsiStates to Style.
+ */
+internal fun from(states: AnsiStates): Style {
+    var styleResult = states.style
+    if (states.items.isEmpty()) {
+        // [m should be treated as a reset as well
+        return Style.reset()
+    }
+    for (item in states.items) {
+        styleResult =
+            when (item.code) {
+                is AnsiCode.Reset -> Style.reset()
+                is AnsiCode.Bold -> styleResult.addModifier(Modifier.BOLD)
+                is AnsiCode.Faint -> styleResult.addModifier(Modifier.DIM)
+                is AnsiCode.Normal -> styleResult.removeModifier(Modifier.BOLD or Modifier.DIM)
+                is AnsiCode.Italic -> styleResult.addModifier(Modifier.ITALIC)
+                is AnsiCode.NotItalic -> styleResult.removeModifier(Modifier.ITALIC)
+                is AnsiCode.Underline -> styleResult.addModifier(Modifier.UNDERLINED)
+                is AnsiCode.UnderlineOff -> styleResult.removeModifier(Modifier.UNDERLINED)
+                is AnsiCode.SlowBlink -> styleResult.addModifier(Modifier.SLOW_BLINK)
+                is AnsiCode.RapidBlink -> styleResult.addModifier(Modifier.RAPID_BLINK)
+                is AnsiCode.BlinkOff -> styleResult.removeModifier(Modifier.SLOW_BLINK or Modifier.RAPID_BLINK)
+                is AnsiCode.Reverse -> styleResult.addModifier(Modifier.REVERSED)
+                is AnsiCode.Conceal -> styleResult.addModifier(Modifier.HIDDEN)
+                is AnsiCode.Reveal -> styleResult.removeModifier(Modifier.HIDDEN)
+                is AnsiCode.CrossedOut -> styleResult.addModifier(Modifier.CROSSED_OUT)
+                is AnsiCode.CrossedOutOff -> styleResult.removeModifier(Modifier.CROSSED_OUT)
+                is AnsiCode.DefaultForegroundColor -> styleResult.fg(Color.Reset)
+                is AnsiCode.DefaultBackgroundColor -> styleResult.bg(Color.Reset)
+                is AnsiCode.SetForegroundColor -> {
+                    item.color?.let { styleResult.fg(it) } ?: styleResult
                 }
-        }
-        return result
+                is AnsiCode.SetBackgroundColor -> {
+                    item.color?.let { styleResult.bg(it) } ?: styleResult
+                }
+                is AnsiCode.ForegroundColor -> styleResult.fg(item.code.color)
+                is AnsiCode.BackgroundColor -> styleResult.bg(item.code.color)
+                else -> styleResult
+            }
     }
+    return styleResult
 }
 
 /**
- * Parser state for tracking position in byte array.
- *
- * This class provides low-level parsing utilities for navigating through
- * byte sequences, similar to parser combinator libraries.
- *
- * @property data The byte array being parsed.
+ * Parse ANSI bytes into a Text.
  */
-private class Parser(
-    private val data: ByteArray,
-) {
-    var pos: Int = 0
-
-    val remaining: Int get() = data.size - pos
-    val isAtEnd: Boolean get() = pos >= data.size
-
-    fun peek(): Byte? = if (pos < data.size) data[pos] else null
-
-    fun peekChar(): Char? = peek()?.toInt()?.toChar()
-
-    fun advance(): Byte? = if (pos < data.size) data[pos++] else null
-
-    fun advanceChar(): Char? = advance()?.toInt()?.toChar()
-
-    fun slice(start: Int, end: Int): ByteArray = data.sliceArray(start until end)
-
-    fun takeWhile(predicate: (Byte) -> Boolean): ByteArray {
-        val start = pos
-        while (pos < data.size && predicate(data[pos])) {
-            pos++
-        }
-        return slice(start, pos)
-    }
-
-    fun takeUntil(predicate: (Byte) -> Boolean): ByteArray {
-        val start = pos
-        while (pos < data.size && !predicate(data[pos])) {
-            pos++
-        }
-        return slice(start, pos)
-    }
-
-    fun expect(b: Byte): Boolean {
-        if (peek() == b) {
-            advance()
-            return true
-        }
-        return false
-    }
-
-    fun expectChar(c: Char): Boolean = expect(c.code.toByte())
-
-    fun expectTag(tag: String): Boolean {
-        if (pos + tag.length > data.size) return false
-        for (i in tag.indices) {
-            if (data[pos + i] != tag[i].code.toByte()) return false
-        }
-        pos += tag.length
-        return true
-    }
-
-    fun parseUByte(): UByte? {
-        val start = pos
-        while (pos < data.size && data[pos] in '0'.code.toByte()..'9'.code.toByte()) {
-            pos++
-        }
-        if (start == pos) return null
-        val str = slice(start, pos).decodeToString()
-        return str.toUByteOrNull()
-    }
-
-    fun parseInt(): Int? {
-        val start = pos
-        if (pos < data.size && data[pos] == '-'.code.toByte()) pos++
-        while (pos < data.size && data[pos] in '0'.code.toByte()..'9'.code.toByte()) {
-            pos++
-        }
-        if (start == pos) return null
-        val str = slice(start, pos).decodeToString()
-        return str.toIntOrNull()
-    }
-
-    fun skipOptionalSemicolon() {
-        if (peek() == ';'.code.toByte()) advance()
-    }
-}
-
-/**
- * Parse a byte array containing ANSI escape sequences into a [Text].
- *
- * This is the main entry point for ANSI parsing. It processes the entire
- * byte array line by line, accumulating styled spans into a [Text] object.
- *
- * @param data The byte array to parse.
- * @return A [Text] object with styled lines and spans.
- */
-internal fun parseText(data: ByteArray): Text {
+internal fun text(s: ByteArray): Text {
     val lines = mutableListOf<Line>()
-    var lastStyle = Style.default()
-    val parser = Parser(data)
-
-    while (!parser.isAtEnd) {
-        val (line, style) = parseLine(parser, lastStyle)
-        lines.add(line)
-        lastStyle = style
+    var last = Style.default()
+    var offset = 0
+    while (offset < s.size) {
+        val (l, nextStyle, nextOffset) = line(last)(s, offset)
+        lines.add(l)
+        last = nextStyle
+        if (nextOffset == offset) {
+            break
+        }
+        offset = nextOffset
     }
-
     return Text.from(lines)
 }
 
 /**
- * Parse a single line from the parser.
- *
- * @param parser The parser state.
- * @param style The current style to apply to spans.
- * @return A pair of the parsed [Line] and the style at end of line.
+ * Parse ANSI bytes into a Text (fast / zero-copy equivalent).
  */
-private fun parseLine(parser: Parser, style: Style): Pair<Line, Style> {
-    // Take until newline
-    val lineData = parser.takeUntil { it == '\n'.code.toByte() }
+internal fun textFast(s: ByteArray): Text = text(s)
 
-    // Skip newline if present
-    if (parser.peek() == '\n'.code.toByte()) {
-        parser.advance()
+/**
+ * Parse a newline.
+ */
+internal fun newline(s: ByteArray, pos: Int): Pair<Int, Boolean> {
+    if (pos >= s.size) return Pair(pos, false)
+    if (s[pos] == '\r'.code.toByte() && pos + 1 < s.size && s[pos + 1] == '\n'.code.toByte()) {
+        return Pair(pos + 2, true)
     }
+    if (s[pos] == '\n'.code.toByte() || s[pos] == '\r'.code.toByte()) {
+        return Pair(pos + 1, true)
+    }
+    return Pair(pos, false)
+}
+
+/**
+ * Parse a line given a starting style.
+ */
+internal fun line(style: Style): (ByteArray, Int) -> Triple<Line, Style, Int> = { s, startPos ->
+    var pos = startPos
+    // take until newline
+    val lineStart = pos
+    while (pos < s.size && s[pos] != '\n'.code.toByte() && s[pos] != '\r'.code.toByte()) {
+        pos++
+    }
+    val lineEnd = pos
+    val (afterNewline, _) = newline(s, pos)
 
     val spans = mutableListOf<Span>()
-    var lastStyle = style
-    val lineParser = Parser(lineData)
-
-    while (!lineParser.isAtEnd) {
-        val span = parseSpan(lineParser, lastStyle)
-        lastStyle = lastStyle.patch(span.style)
-        if (span.content.isNotEmpty()) {
-            spans.add(span)
+    var last = style
+    var textPos = lineStart
+    while (textPos < lineEnd) {
+        val (sp, nextStyle, nextPos) = span(last)(s, textPos, lineEnd)
+        last = last.patch(sp.style)
+        if (sp.content.isNotEmpty()) {
+            spans.add(sp)
         }
+        if (nextPos == textPos) {
+            break
+        }
+        textPos = nextPos
     }
 
-    return Pair(Line.from(spans), lastStyle)
+    Triple(Line.from(spans), last, afterNewline)
 }
 
 /**
- * Parse a single span from the parser.
- *
- * A span consists of an optional style escape sequence followed by text content.
- *
- * @param parser The parser state.
- * @param lastStyle The style from the previous span.
- * @return The parsed [Span] with content and style.
+ * Parse a line (fast equivalent).
  */
-private fun parseSpan(parser: Parser, lastStyle: Style): Span {
-    var currentStyle = lastStyle
-
-    // Try to parse style escape sequence
-    val styleResult = parseStyle(parser, currentStyle)
-    if (styleResult != null) {
-        currentStyle = currentStyle.patch(styleResult)
-    }
-
-    // Take text until escape or newline
-    val textData = parser.takeWhile { it != ESC && it != '\n'.code.toByte() }
-    val text =
-        try {
-            textData.decodeToString()
-        } catch (e: Exception) {
-            // Invalid UTF-8, skip
-            ""
-        }
-
-    return Span.styled(text, currentStyle)
-}
-
-private const val ESC: Byte = 0x1B
+internal fun lineFast(style: Style): (ByteArray, Int) -> Triple<Line, Style, Int> = line(style)
 
 /**
- * Parse a style escape sequence (SGR - Select Graphic Rendition).
- *
- * SGR sequences have the format: ESC [ <params> m
- * where params are semicolon-separated numeric codes.
- *
- * @param parser The parser state.
- * @param style The current style to modify.
- * @return The new style if a valid SGR sequence was parsed, null otherwise.
+ * Parse a single styled span.
  */
-private fun parseStyle(parser: Parser, style: Style): Style? {
-    if (parser.peek() != ESC) return null
+internal fun span(last: Style): (ByteArray, Int, Int) -> Triple<Span, Style, Int> = { s, startPos, endPos ->
+    var currentLast = last
+    var pos = startPos
 
-    val startPos = parser.pos
-    parser.advance() // consume ESC
-
-    // Check for CSI (Control Sequence Introducer) = ESC[
-    if (parser.peek() != '['.code.toByte()) {
-        // Try to consume other escape sequences
-        consumeAnyEscapeSequence(parser)
-        return null
+    val (parsedStyle, styleEndPos) = style(currentLast)(s, pos)
+    pos = styleEndPos
+    if (parsedStyle != null) {
+        currentLast = currentLast.patch(parsedStyle)
     }
-    parser.advance() // consume [
 
-    // Parse SGR (Select Graphic Rendition) codes
+    val textStart = pos
+    while (pos < endPos && s[pos] != 0x1B.toByte() && s[pos] != '\n'.code.toByte() && s[pos] != '\r'.code.toByte()) {
+        pos++
+    }
+    val content = if (pos > textStart) s.decodeToString(textStart, pos) else ""
+
+    Triple(Span.styled(content, currentLast), currentLast, pos)
+}
+
+/**
+ * Parse a span (fast equivalent).
+ */
+internal fun spanFast(last: Style): (ByteArray, Int, Int) -> Triple<Span, Style, Int> = { s, startPos, endPos ->
+    span(last)(s, startPos, endPos)
+}
+
+/**
+ * Parse optional style escape sequence.
+ */
+internal fun style(style: Style): (ByteArray, Int) -> Pair<Style?, Int> = { s, pos ->
+    if (pos >= s.size || s[pos] != 0x1B.toByte()) {
+        Pair(null, pos)
+    } else {
+        val (items, afterSgr) = ansiSgrCode(s, pos)
+        if (items != null) {
+            Pair(AnsiStates(items, style).toStyle(), afterSgr)
+        } else {
+            val (_, afterEsc) = anyEscapeSequence(s, pos)
+            Pair(null, afterEsc)
+        }
+    }
+}
+
+/**
+ * Parse a complete ANSI SGR code (ESC [ ... m).
+ */
+internal fun ansiSgrCode(s: ByteArray, pos: Int): Pair<List<AnsiItem>?, Int> {
+    if (pos >= s.size || s[pos] != 0x1B.toByte()) return Pair(null, pos)
+    if (pos + 1 >= s.size || s[pos + 1] != '['.code.toByte()) return Pair(null, pos)
+
+    var cur = pos + 2
     val items = mutableListOf<AnsiItem>()
 
-    while (!parser.isAtEnd && parser.peek() != 'm'.code.toByte()) {
-        val item = parseSgrItem(parser) ?: break
+    while (cur < s.size && s[cur] != 'm'.code.toByte()) {
+        val (item, nextCur) = ansiSgrItem(s, cur)
+        if (item == null) {
+            return Pair(null, pos)
+        }
         items.add(item)
-        parser.skipOptionalSemicolon()
+        cur = nextCur
     }
 
-    // Expect m terminator
-    if (parser.peek() != 'm'.code.toByte()) {
-        // Not a valid SGR sequence, try to recover
-        parser.pos = startPos + 1 // skip just the ESC
-        consumeAnyEscapeSequence(parser)
-        return null
+    if (cur < s.size && s[cur] == 'm'.code.toByte()) {
+        return Pair(items, cur + 1)
     }
-    parser.advance() // consume m byte
-
-    return AnsiStates(items, style).toStyle()
+    return Pair(null, pos)
 }
 
 /**
- * Consume any escape sequence we don't understand.
- *
- * This handles CSI sequences (ESC [) and OSC sequences (ESC ])
- * that we don't specifically parse, preventing them from appearing
- * as garbage in the output text.
- *
- * @param parser The parser state.
+ * Consume any escape sequence.
  */
-private fun consumeAnyEscapeSequence(parser: Parser) {
-    val nextChar = parser.peek() ?: return
-
-    when (nextChar.toInt().toChar()) {
-        '[' -> {
-            // CSI sequence: consume until alpha character
-            parser.advance()
-            parser.takeUntil { it.toInt().toChar().isLetter() }
-            if (!parser.isAtEnd) parser.advance() // consume terminator
-        }
-        ']' -> {
-            // OSC sequence: consume until BEL (0x07) or ST (ESC \)
-            parser.advance()
-            parser.takeUntil { it == 0x07.toByte() }
-            if (!parser.isAtEnd) parser.advance() // consume BEL
-        }
-        else -> {
-            // Unknown sequence, just skip one character
-        }
-    }
-}
-
-/**
- * Parse a single SGR item (one numeric code in the sequence).
- *
- * @param parser The parser state.
- * @return The parsed [AnsiItem] or null if parsing failed.
- */
-private fun parseSgrItem(parser: Parser): AnsiItem? {
-    val code = parser.parseUByte() ?: return null
-    val ansiCode = AnsiCode.from(code)
-
-    val color =
-        when (ansiCode) {
-            is AnsiCode.SetForegroundColor, is AnsiCode.SetBackgroundColor -> {
-                parser.skipOptionalSemicolon()
-                parseColor(parser)
+internal fun anyEscapeSequence(s: ByteArray, pos: Int): Pair<ByteArray?, Int> {
+    if (pos >= s.size || s[pos] != 0x1B.toByte()) return Pair(null, pos)
+    var cur = pos + 1
+    if (cur < s.size) {
+        when (s[cur].toInt().toChar()) {
+            '[' -> {
+                cur++
+                while (cur < s.size && !s[cur].toInt().toChar().isLetter()) {
+                    cur++
+                }
+                if (cur < s.size) cur++ // consume alpha
+                return Pair(s.sliceArray((pos + 1) until cur), cur)
             }
-            else -> null
+            ']' -> {
+                cur++
+                while (cur < s.size && s[cur] != 0x07.toByte()) {
+                    cur++
+                }
+                if (cur < s.size) cur++ // consume BEL
+                return Pair(s.sliceArray((pos + 1) until cur), cur)
+            }
+            else -> {
+                return Pair(null, cur)
+            }
         }
-
-    return AnsiItem(ansiCode, color)
+    }
+    return Pair(null, cur)
 }
 
 /**
- * Parse an extended color (8-bit indexed or 24-bit RGB).
- *
- * Extended colors follow code 38 (foreground) or 48 (background) and have the format:
- * - 8-bit: `38;5;N` where N is 0-255
- * - 24-bit: `38;2;R;G;B` where R, G, B are 0-255
- *
- * @param parser The parser state.
- * @return The parsed [Color] or null if parsing failed.
+ * Parse a single ANSI SGR item.
  */
-private fun parseColor(parser: Parser): Color? {
-    val colorType = parseColorType(parser) ?: return null
-    parser.skipOptionalSemicolon()
+internal fun ansiSgrItem(s: ByteArray, pos: Int): Pair<AnsiItem?, Int> {
+    var cur = pos
+    // parse u8
+    val numStart = cur
+    while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) {
+        cur++
+    }
+    if (cur == numStart) {
+        return Pair(null, pos)
+    }
+    val codeVal = s.decodeToString(numStart, cur).toUByteOrNull() ?: return Pair(null, pos)
+    val code = AnsiCode.from(codeVal)
 
-    return when (colorType) {
+    var colorVal: Color? = null
+    when (code) {
+        is AnsiCode.SetForegroundColor, is AnsiCode.SetBackgroundColor -> {
+            if (cur < s.size && s[cur] == ';'.code.toByte()) {
+                cur++
+            }
+            val (c, nextCur) = color(s, cur)
+            if (c == null) {
+                return Pair(null, pos)
+            }
+            colorVal = c
+            cur = nextCur
+        }
+        else -> {}
+    }
+
+    if (cur < s.size && s[cur] == ';'.code.toByte()) {
+        cur++
+    }
+
+    return Pair(AnsiItem(code, colorVal), cur)
+}
+
+/**
+ * Parse an extended color.
+ */
+internal fun color(s: ByteArray, pos: Int): Pair<Color?, Int> {
+    val (cType, nextPos) = colorType(s, pos)
+    if (cType == null) return Pair(null, pos)
+    var cur = nextPos
+    if (cur < s.size && s[cur] == ';'.code.toByte()) {
+        cur++
+    }
+
+    return when (cType) {
         ColorType.TrueColor -> {
-            val r = parser.parseUByte() ?: return null
-            if (!parser.expectChar(';')) return null
-            val g = parser.parseUByte() ?: return null
-            if (!parser.expectChar(';')) return null
-            val b = parser.parseUByte() ?: return null
-            Color.Rgb(r, g, b)
+            val rStart = cur
+            while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) cur++
+            val r = s.decodeToString(rStart, cur).toUByteOrNull() ?: return Pair(null, pos)
+            if (cur >= s.size || s[cur] != ';'.code.toByte()) return Pair(null, pos)
+            cur++
+
+            val gStart = cur
+            while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) cur++
+            val g = s.decodeToString(gStart, cur).toUByteOrNull() ?: return Pair(null, pos)
+            if (cur >= s.size || s[cur] != ';'.code.toByte()) return Pair(null, pos)
+            cur++
+
+            val bStart = cur
+            while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) cur++
+            val b = s.decodeToString(bStart, cur).toUByteOrNull() ?: return Pair(null, pos)
+
+            Pair(Color.Rgb(r, g, b), cur)
         }
         ColorType.EightBit -> {
-            val index = parser.parseUByte() ?: return null
-            Color.Indexed(index)
+            val idxStart = cur
+            while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) cur++
+            val idx = s.decodeToString(idxStart, cur).toUByteOrNull() ?: return Pair(null, pos)
+            Pair(Color.Indexed(idx), cur)
         }
     }
 }
 
 /**
  * Parse the color type indicator (2 for RGB, 5 for indexed).
- *
- * @param parser The parser state.
- * @return The [ColorType] or null if parsing failed.
  */
-private fun parseColorType(parser: Parser): ColorType? {
-    val t = parser.parseInt() ?: return null
-    if (!parser.expectChar(';')) return null
+internal fun colorType(s: ByteArray, pos: Int): Pair<ColorType?, Int> {
+    var cur = pos
+    val numStart = cur
+    if (cur < s.size && s[cur] == '-'.code.toByte()) cur++
+    while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) cur++
+    if (cur == numStart) return Pair(null, pos)
+    val num = s.decodeToString(numStart, cur).toLongOrNull() ?: return Pair(null, pos)
+    if (cur >= s.size || s[cur] != ';'.code.toByte()) return Pair(null, pos)
+    cur++ // skip ';'
 
-    return when (t) {
-        2 -> ColorType.TrueColor
-        5 -> ColorType.EightBit
-        else -> null
-    }
+    val type =
+        when (num) {
+            2L -> ColorType.TrueColor
+            5L -> ColorType.EightBit
+            else -> null
+        } ?: return Pair(null, pos)
+
+    return Pair(type, cur)
 }
+
+/**
+ * Backward compatibility helper.
+ */
+internal fun parseText(data: ByteArray): Text = text(data)

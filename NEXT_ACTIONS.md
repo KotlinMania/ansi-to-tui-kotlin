@@ -5,11 +5,11 @@ Based on AST analysis, here are the concrete next steps.
 ## Summary
 
 - **Files Present:** 4/5 (80.0%)
-- **Function parity:** 4/58 matched (target 32) — 6.9%
+- **Function parity:** 20/58 matched (target 28) — 34.5%
 - **Class/type parity:** 6/6 matched (target 40) — 100.0%
-- **Combined symbol parity:** 10/64 matched (target 72) — 15.6%
-- **Average inline-code cosine:** 0.30 (function body across 4 matched files)
-- **Average documentation cosine:** 0.61 (doc text across 4 matched files)
+- **Combined symbol parity:** 26/64 matched (target 68) — 40.6%
+- **Average inline-code cosine:** 0.41 (function body across 4 matched files)
+- **Average documentation cosine:** 0.65 (doc text across 4 matched files)
 - **Cheat-zeroed Files:** 0
 - **Critical Issues:** 3 files with <0.60 function similarity
 
@@ -41,14 +41,14 @@ Every matched file is listed below with function and type symbol parity.
 ### 2. parser
 
 - **Target:** `ansitotui.Parser`
-- **Similarity:** 0.00
+- **Similarity:** 0.46
 - **Dependents:** 0
-- **Priority Score:** 161910.0
-- **Functions:** 0/16 matched (target 22)
-- **Missing functions:** `from`, `text`, `text_fast`, `newline`, `line`, `line_fast`, `span`, `span_fast`, `style`, `ansi_sgr_code`, `any_escape_sequence`, `ansi_sgr_item`, `color`, `color_type`, `color_test`, `ansi_items_test`
+- **Priority Score:** 1905.4
+- **Functions:** 16/16 matched (target 18)
+- **Missing functions:** _none_
 - **Types:** 3/3 matched (target 4)
 - **Missing types:** _none_
-- **Tests:** 0/2 matched
+- **Tests:** 2/2 matched
 
 ### 3. lib
 
