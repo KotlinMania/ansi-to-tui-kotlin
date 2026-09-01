@@ -45,3 +45,7 @@ DerivedData/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
+
+# Upstream Rust source staging / porting tooling
+/tmp/
+/tools/
