@@ -675,6 +675,19 @@ rootProject.extensions.configure<NodeJsRootExtension>("kotlinNodeJs") {
     versions.kotlinWebHelpers.version = providers.gradleProperty("node.kotlinWebHelpers.version").getOrElse("3.1.0")
 }
 
+// Refresh locks only when explicitly requested; ordinary builds validate stored locks.
+val refreshYarnLocks =
+    providers.gradleProperty("kotlinmania.refreshYarnLocks").map(String::toBoolean).getOrElse(false)
+if (refreshYarnLocks) {
+    tasks
+        .matching { it.name == "kotlinStoreYarnLock" || it.name == "kotlinWasmStoreYarnLock" }
+        .configureEach {
+            dependsOn(
+                if (name == "kotlinStoreYarnLock") "kotlinUpgradeYarnLock" else "kotlinWasmUpgradeYarnLock",
+            )
+        }
+}
+
 // ============================================================================
 // Maven Central publishing — Central Portal, first-party + bespoke upload
 // ----------------------------------------------------------------------------
