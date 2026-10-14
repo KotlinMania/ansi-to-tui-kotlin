@@ -31,9 +31,6 @@
  */
 package ansitotui
 
-import ratatui.style.Color
-import ratatui.style.Modifier
-import ratatui.style.Style
 import ratatui.text.Text
 
 /**

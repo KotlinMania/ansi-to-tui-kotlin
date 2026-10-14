@@ -49,33 +49,101 @@ internal fun from(states: AnsiStates): Style {
     for (item in states.items) {
         styleResult =
             when (item.code) {
-                is AnsiCode.Reset -> Style.reset()
-                is AnsiCode.Bold -> styleResult.addModifier(Modifier.BOLD)
-                is AnsiCode.Faint -> styleResult.addModifier(Modifier.DIM)
-                is AnsiCode.Normal -> styleResult.removeModifier(Modifier.BOLD or Modifier.DIM)
-                is AnsiCode.Italic -> styleResult.addModifier(Modifier.ITALIC)
-                is AnsiCode.NotItalic -> styleResult.removeModifier(Modifier.ITALIC)
-                is AnsiCode.Underline -> styleResult.addModifier(Modifier.UNDERLINED)
-                is AnsiCode.UnderlineOff -> styleResult.removeModifier(Modifier.UNDERLINED)
-                is AnsiCode.SlowBlink -> styleResult.addModifier(Modifier.SLOW_BLINK)
-                is AnsiCode.RapidBlink -> styleResult.addModifier(Modifier.RAPID_BLINK)
-                is AnsiCode.BlinkOff -> styleResult.removeModifier(Modifier.SLOW_BLINK or Modifier.RAPID_BLINK)
-                is AnsiCode.Reverse -> styleResult.addModifier(Modifier.REVERSED)
-                is AnsiCode.Conceal -> styleResult.addModifier(Modifier.HIDDEN)
-                is AnsiCode.Reveal -> styleResult.removeModifier(Modifier.HIDDEN)
-                is AnsiCode.CrossedOut -> styleResult.addModifier(Modifier.CROSSED_OUT)
-                is AnsiCode.CrossedOutOff -> styleResult.removeModifier(Modifier.CROSSED_OUT)
-                is AnsiCode.DefaultForegroundColor -> styleResult.fg(Color.Reset)
-                is AnsiCode.DefaultBackgroundColor -> styleResult.bg(Color.Reset)
+                is AnsiCode.Reset -> {
+                    Style.reset()
+                }
+
+                is AnsiCode.Bold -> {
+                    styleResult.addModifier(Modifier.BOLD)
+                }
+
+                is AnsiCode.Faint -> {
+                    styleResult.addModifier(Modifier.DIM)
+                }
+
+                is AnsiCode.Normal -> {
+                    styleResult.removeModifier(Modifier.BOLD or Modifier.DIM)
+                }
+
+                is AnsiCode.Italic -> {
+                    styleResult.addModifier(Modifier.ITALIC)
+                }
+
+                is AnsiCode.NotItalic -> {
+                    styleResult.removeModifier(Modifier.ITALIC)
+                }
+
+                is AnsiCode.Underline -> {
+                    styleResult.addModifier(Modifier.UNDERLINED)
+                }
+
+                is AnsiCode.UnderlineOff -> {
+                    styleResult.removeModifier(Modifier.UNDERLINED)
+                }
+
+                is AnsiCode.SlowBlink -> {
+                    styleResult.addModifier(Modifier.SLOW_BLINK)
+                }
+
+                is AnsiCode.RapidBlink -> {
+                    styleResult.addModifier(Modifier.RAPID_BLINK)
+                }
+
+                is AnsiCode.BlinkOff -> {
+                    styleResult.removeModifier(Modifier.SLOW_BLINK or Modifier.RAPID_BLINK)
+                }
+
+                is AnsiCode.Reverse -> {
+                    styleResult.addModifier(Modifier.REVERSED)
+                }
+
+                is AnsiCode.InvertOff -> {
+                    styleResult.removeModifier(Modifier.REVERSED)
+                }
+
+                is AnsiCode.Conceal -> {
+                    styleResult.addModifier(Modifier.HIDDEN)
+                }
+
+                is AnsiCode.Reveal -> {
+                    styleResult.removeModifier(Modifier.HIDDEN)
+                }
+
+                is AnsiCode.CrossedOut -> {
+                    styleResult.addModifier(Modifier.CROSSED_OUT)
+                }
+
+                is AnsiCode.CrossedOutOff -> {
+                    styleResult.removeModifier(Modifier.CROSSED_OUT)
+                }
+
+                is AnsiCode.DefaultForegroundColor -> {
+                    styleResult.fg(Color.Reset)
+                }
+
+                is AnsiCode.DefaultBackgroundColor -> {
+                    styleResult.bg(Color.Reset)
+                }
+
                 is AnsiCode.SetForegroundColor -> {
                     item.color?.let { styleResult.fg(it) } ?: styleResult
                 }
+
                 is AnsiCode.SetBackgroundColor -> {
                     item.color?.let { styleResult.bg(it) } ?: styleResult
                 }
-                is AnsiCode.ForegroundColor -> styleResult.fg(item.code.color)
-                is AnsiCode.BackgroundColor -> styleResult.bg(item.code.color)
-                else -> styleResult
+
+                is AnsiCode.ForegroundColor -> {
+                    styleResult.fg(item.code.color)
+                }
+
+                is AnsiCode.BackgroundColor -> {
+                    styleResult.bg(item.code.color)
+                }
+
+                else -> {
+                    styleResult
+                }
             }
     }
     return styleResult
@@ -136,7 +204,7 @@ internal fun line(style: Style): (ByteArray, Int) -> Triple<Line, Style, Int> = 
     var last = style
     var textPos = lineStart
     while (textPos < lineEnd) {
-        val (sp, nextStyle, nextPos) = span(last)(s, textPos, lineEnd)
+        val (sp, _, nextPos) = span(last)(s, textPos, lineEnd)
         last = last.patch(sp.style)
         if (sp.content.isNotEmpty()) {
             spans.add(sp)
@@ -147,7 +215,8 @@ internal fun line(style: Style): (ByteArray, Int) -> Triple<Line, Style, Int> = 
         textPos = nextPos
     }
 
-    Triple(Line.from(spans), last, afterNewline)
+    val resultLine = if (spans.isEmpty()) Line.from("") else Line.from(spans)
+    Triple(resultLine, last, afterNewline)
 }
 
 /**
@@ -242,6 +311,7 @@ internal fun anyEscapeSequence(s: ByteArray, pos: Int): Pair<ByteArray?, Int> {
                 if (cur < s.size) cur++ // consume alpha
                 return Pair(s.sliceArray((pos + 1) until cur), cur)
             }
+
             ']' -> {
                 cur++
                 while (cur < s.size && s[cur] != 0x07.toByte()) {
@@ -250,6 +320,7 @@ internal fun anyEscapeSequence(s: ByteArray, pos: Int): Pair<ByteArray?, Int> {
                 if (cur < s.size) cur++ // consume BEL
                 return Pair(s.sliceArray((pos + 1) until cur), cur)
             }
+
             else -> {
                 return Pair(null, cur)
             }
@@ -287,6 +358,7 @@ internal fun ansiSgrItem(s: ByteArray, pos: Int): Pair<AnsiItem?, Int> {
             colorVal = c
             cur = nextCur
         }
+
         else -> {}
     }
 
@@ -328,6 +400,7 @@ internal fun color(s: ByteArray, pos: Int): Pair<Color?, Int> {
 
             Pair(Color.Rgb(r, g, b), cur)
         }
+
         ColorType.EightBit -> {
             val idxStart = cur
             while (cur < s.size && s[cur] in '0'.code.toByte()..'9'.code.toByte()) cur++
