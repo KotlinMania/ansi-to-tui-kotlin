@@ -120,64 +120,121 @@ sealed class AnsiCode {
         fun from(code: UByte): AnsiCode =
             when (code.toInt()) {
                 0 -> Reset
+
                 1 -> Bold
+
                 2 -> Faint
+
                 3 -> Italic
+
                 4 -> Underline
+
                 5 -> SlowBlink
+
                 6 -> RapidBlink
+
                 7 -> Reverse
+
                 8 -> Conceal
+
                 9 -> CrossedOut
+
                 10 -> PrimaryFont
+
                 11 -> AlternateFont
+
                 // AlternateFonts = 12..19
                 20 -> Fraktur
+
                 21 -> BoldOff
+
                 22 -> Normal
+
                 23 -> NotItalic
+
                 24 -> UnderlineOff
+
                 25 -> BlinkOff
+
                 // 26 ?
                 27 -> InvertOff
+
                 28 -> Reveal
+
                 29 -> CrossedOutOff
+
                 30 -> ForegroundColor(Color.Black)
+
                 31 -> ForegroundColor(Color.Red)
+
                 32 -> ForegroundColor(Color.Green)
+
                 33 -> ForegroundColor(Color.Yellow)
+
                 34 -> ForegroundColor(Color.Blue)
+
                 35 -> ForegroundColor(Color.Magenta)
+
                 36 -> ForegroundColor(Color.Cyan)
+
                 37 -> ForegroundColor(Color.Gray)
+
                 38 -> SetForegroundColor
+
                 39 -> DefaultForegroundColor
+
                 40 -> BackgroundColor(Color.Black)
+
                 41 -> BackgroundColor(Color.Red)
+
                 42 -> BackgroundColor(Color.Green)
+
                 43 -> BackgroundColor(Color.Yellow)
+
                 44 -> BackgroundColor(Color.Blue)
+
                 45 -> BackgroundColor(Color.Magenta)
+
                 46 -> BackgroundColor(Color.Cyan)
+
                 47 -> BackgroundColor(Color.Gray)
+
                 48 -> SetBackgroundColor
+
                 49 -> DefaultBackgroundColor
+
                 90 -> ForegroundColor(Color.DarkGray)
+
                 91 -> ForegroundColor(Color.LightRed)
+
                 92 -> ForegroundColor(Color.LightGreen)
+
                 93 -> ForegroundColor(Color.LightYellow)
+
                 94 -> ForegroundColor(Color.LightBlue)
+
                 95 -> ForegroundColor(Color.LightMagenta)
+
                 96 -> ForegroundColor(Color.LightCyan)
+
                 97 -> ForegroundColor(Color.White)
+
                 100 -> BackgroundColor(Color.DarkGray)
+
                 101 -> BackgroundColor(Color.LightRed)
+
                 102 -> BackgroundColor(Color.LightGreen)
+
                 103 -> BackgroundColor(Color.LightYellow)
+
                 104 -> BackgroundColor(Color.LightBlue)
+
                 105 -> BackgroundColor(Color.LightMagenta)
+
                 106 -> BackgroundColor(Color.LightCyan)
+
                 107 -> BackgroundColor(Color.White)
+
                 else -> Code(listOf(code))
             }
     }
