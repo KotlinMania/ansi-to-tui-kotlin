@@ -766,6 +766,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(commonMainDependencyBundle)
+            // IntoText and the public conversion functions return Ratatui Text.
+            api(libs.ratatui)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
