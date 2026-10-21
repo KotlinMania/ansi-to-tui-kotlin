@@ -1,4 +1,3 @@
-// port-lint: source lib.rs
 /**
  * Convert ANSI color and style codes into Ratatui [Text].
  *
