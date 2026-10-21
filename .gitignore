@@ -78,3 +78,4 @@ local.properties
 # Kotlin/Native
 *.kexe
 *.klib
+deep_symbol_inventory.txt
