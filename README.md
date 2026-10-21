@@ -20,7 +20,7 @@ This is an **in-progress port**. The goal is feature parity with the upstream Ru
 
 ```kotlin
 dependencies {
-    implementation("io.github.kotlinmania:ansi-to-tui-kotlin:0.1.4")
+    implementation("io.github.kotlinmania:ansi-to-tui-kotlin:0.2.0")
 }
 ```
 

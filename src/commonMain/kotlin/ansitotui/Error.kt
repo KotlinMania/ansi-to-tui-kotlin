@@ -48,5 +48,3 @@ sealed class Error : Exception() {
         fun from(message: String): Error = NomError(message)
     }
 }
-
-typealias AnsiError = Error
